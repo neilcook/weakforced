@@ -15,7 +15,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(25):
+        for i in range(45):
             r = self.reportFunc('ivbaddie', '127.0.0.1', "1234'%s" % i, True)
             r.json()
 
@@ -55,7 +55,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(12):
+        for i in range(45):
             r = self.reportFunc('ipbaddie', "127.0.0.%s" % i, "1234", True)
             r.json()
 
@@ -155,10 +155,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(20):
-            r = self.reportFunc('expirebaddie%s' % i, "127.0.0.1", "1234", True)
-            r.json()
-        for i in range(20):
+        for i in range(45):
             r = self.reportFunc('expirebaddie%s' % i, "127.0.0.1", "1234", True)
             r.json()
 
