@@ -38,6 +38,7 @@ RUN apt-get update && \
                geoip-database \
                geoipupdate \
                net-tools \
+               redis-server \
                clang \
                cmake
 

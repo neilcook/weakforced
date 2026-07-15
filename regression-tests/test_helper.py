@@ -34,6 +34,8 @@ class ApiTestCase(unittest.TestCase):
         self.server3_url = 'http://%s:%s/' % (self.server_address, self.server3_port)
         self.server4_port = 8087
         self.server4_url = 'http://%s:%s/' % (self.server_address, self.server4_port)
+        self.server5_port = 8088
+        self.server5_url = 'http://%s:%s/' % (self.server_address, self.server5_port)
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
@@ -344,6 +346,9 @@ class ApiTestCase(unittest.TestCase):
     def getWLFuncPersist(self):
         return self.session.get(self.url3("/?command=getWL"))
 
+    def getBLFuncPersistTLS(self):
+        return self.session.get(self.url5("/?command=getBL"))
+
     def addBLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -393,6 +398,16 @@ class ApiTestCase(unittest.TestCase):
         payload['reason'] = reason
         return self.session.post(
             self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryIPPersistTLS(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url5("/?command=addBLEntry"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
@@ -593,6 +608,9 @@ class ApiTestCase(unittest.TestCase):
 
     def url4(self, relative_url):
         return urljoin(self.server4_url, relative_url)
+
+    def url5(self, relative_url):
+        return urljoin(self.server5_url, relative_url)
 
     def ta_url(self, relative_url):
         return urljoin(self.ta_server_url, relative_url)
