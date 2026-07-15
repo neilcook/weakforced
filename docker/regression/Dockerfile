@@ -1,4 +1,4 @@
-FROM ubuntu:jammy as wforce_regression
+FROM ubuntu:noble as wforce_regression
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -29,8 +29,8 @@ RUN apt-get update && \
                asciidoctor \
                wget \
                nginx \
-               docker \
-               docker-compose \
+               docker.io \
+               docker-compose-v2 \
                python3-pip \
                python3-venv \
                prometheus \
@@ -50,8 +50,6 @@ RUN tar xvf GeoLite2-City.mmdb.tar || true
 RUN tar xvf GeoLite2-Country.mmdb.tar || true
 RUN tar xvf GeoLite2-ASN.mmdb.tar || true
 RUN mv GeoLite2*/GeoLite2-*.mmdb /usr/share/GeoIP || true
-
-RUN pip3 install bottle virtualenv
 
 WORKDIR /wforce/
 RUN mkdir /sdist
