@@ -667,6 +667,7 @@ bool BlackWhiteListDB::setupTLSConnection()
     errlog("setupTLSConnection: could not initiate TLS to redis BlackWhiteListDB (%s:%d): %s", redis_server, redis_port, redis_context->errstr);
     return false;
   }
+  infolog("Established TLS connection to redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
   return true;
 }
 #endif
