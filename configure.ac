@@ -73,6 +73,18 @@ AS_IF([test "x$LIBHIREDIS_LIBS" = "x"], [
 AS_IF([test "x$LIBHIREDIS_LIBS" = "x"], [
   AC_MSG_ERROR([libhiredis not found, libhiredis support is required])
 ])
+AC_ARG_WITH([redis-tls],
+  AS_HELP_STRING([--with-redis-tls], [ Support TLS for redis connections using hiredis_ssl @<:@default=auto@:>@ ]),
+  [with_redis_tls=$withval], [with_redis_tls=auto])
+AS_IF([test "x$with_redis_tls" != "xno"], [
+  PKG_CHECK_MODULES([LIBHIREDIS_SSL], [hiredis_ssl >= 1.1.0], [AC_DEFINE([HAVE_LIBHIREDIS_SSL], [1], [Define to 1 if you have hiredis_ssl])], [
+    AS_IF([test "x$with_redis_tls" = "xyes"], [
+      AC_MSG_ERROR([--with-redis-tls specified but hiredis_ssl >= 1.1.0 was not found])
+    ], [
+      AC_MSG_WARN([hiredis_ssl >= 1.1.0 not found, Redis TLS support will not be available])
+    ])
+  ])
+])
 PDNS_CHECK_YAMLCPP([AC_DEFINE([HAVE_YAMLCPP], [1], [Define to 1 if you have yaml-cpp])], [true])
 AS_IF([test "x$YAMLCPP_LIBS" = "x"], [
   AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is required])

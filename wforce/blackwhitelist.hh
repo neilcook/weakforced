@@ -41,6 +41,8 @@
 #include "ext/threadname.hh"
 #include "webhook.hh"
 
+struct redisSSLContext;
+
 struct BlackWhiteListEntry {
   std::string key;
   std::string reason;
@@ -156,6 +158,12 @@ public:
   void setRedisUsername(const std::string& username) { redis_username = username; }
   void setRedisPassword(const std::string& password) { redis_password = password; }
 
+  void setRedisTLS(bool enable);
+  void setRedisTLSCA(const std::string& ca_file, const std::string& ca_dir) { redis_tls_ca_file = ca_file; redis_tls_ca_dir = ca_dir; }
+  void setRedisTLSClientCert(const std::string& cert_file, const std::string& key_file) { redis_tls_cert_file = cert_file; redis_tls_key_file = key_file; }
+  void setRedisTLSVerifyPeer(bool verify) { redis_tls_verify_peer = verify; }
+  void setRedisTLSServerName(const std::string& server_name) { redis_tls_server_name = server_name; }
+
 private:
   struct TimeTag{};
   struct KeyTag{};
@@ -188,6 +196,14 @@ private:
   unsigned int redis_port;
   std::string redis_password;
   std::string redis_username;
+  bool redis_tls = false;
+  bool redis_tls_verify_peer = true;
+  std::string redis_tls_ca_file;
+  std::string redis_tls_ca_dir;
+  std::string redis_tls_cert_file;
+  std::string redis_tls_key_file;
+  std::string redis_tls_server_name;
+  struct redisSSLContext* redis_ssl_context = nullptr;
   redisContext* redis_context;
   std::atomic<int> redis_timeout;
   std::atomic<int> redis_rw_timeout_secs;
@@ -212,6 +228,7 @@ private:
   void expireEntryLog(BLWLType blt, const std::string& key) const;
   std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
   bool checkSetupContext();
+  bool setupTLSConnection();
   bool addPersistEntry(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason);
   bool deletePersistEntry(const std::string& key, BLWLType bl_type, blackwhitelist_t& blackwhitelist);
   BLWLType BLWLNameToType(const std::string& bl_name) const;

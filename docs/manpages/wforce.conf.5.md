@@ -376,6 +376,40 @@ cannot be called inside the allow/report/reset functions:
 
         blacklistRedisPassword("secret")
 
+* blacklistRedisTLS(<enable>) - Enable TLS for connections to the redis
+  DB. Requires wforce to have been built with hiredis TLS support
+  (hiredis_ssl - see the --with-redis-tls configure option). For example:
+
+        blacklistRedisTLS(true)
+
+* blacklistRedisTLSCA(<ca file> [, <ca path>]) - Set the CA certificate
+  file, and optionally a directory of CA certificates, used to verify
+  the redis server certificate. If not set, the default system CA store
+  is used. For example:
+
+        blacklistRedisTLSCA("/etc/ssl/certs/redis-ca.pem")
+
+* blacklistRedisTLSClientCert(<cert file>, <key file>) - Set a client
+  certificate and private key, for redis servers that require mutual
+  TLS authentication. For example:
+
+        blacklistRedisTLSClientCert("/etc/wforce/redis-client.pem", "/etc/wforce/redis-client.key")
+
+* blacklistRedisTLSVerifyPeer(<verify>) - Enable or disable verification
+  of the redis server certificate. Defaults to true. Note that
+  verification checks the server certificate chain against the
+  configured CA; the server hostname is not checked against the
+  certificate (a hiredis limitation). For example:
+
+        blacklistRedisTLSVerifyPeer(false)
+
+* blacklistRedisTLSServerName(<server name>) - Set the server name sent
+  via SNI (Server Name Indication). If not set, it defaults to the
+  server name configured with blacklistPersistDB(), unless that is an IP
+  address. For example:
+
+        blacklistRedisTLSServerName("redis.example.com")
+
 * blacklistPersistConnectTimeout(<timeout secs>) - Set the connect
   timeout for connecting to the persistent redis DB. If the timeout is
   exceeded during connection at startup then wforce will exit,
@@ -411,6 +445,40 @@ cannot be called inside the allow/report/reset functions:
   to the redis DB. For example:
 
         whitelistRedisPassword("secret")
+
+* whitelistRedisTLS(<enable>) - Enable TLS for connections to the redis
+  DB. Requires wforce to have been built with hiredis TLS support
+  (hiredis_ssl - see the --with-redis-tls configure option). For example:
+
+        whitelistRedisTLS(true)
+
+* whitelistRedisTLSCA(<ca file> [, <ca path>]) - Set the CA certificate
+  file, and optionally a directory of CA certificates, used to verify
+  the redis server certificate. If not set, the default system CA store
+  is used. For example:
+
+        whitelistRedisTLSCA("/etc/ssl/certs/redis-ca.pem")
+
+* whitelistRedisTLSClientCert(<cert file>, <key file>) - Set a client
+  certificate and private key, for redis servers that require mutual
+  TLS authentication. For example:
+
+        whitelistRedisTLSClientCert("/etc/wforce/redis-client.pem", "/etc/wforce/redis-client.key")
+
+* whitelistRedisTLSVerifyPeer(<verify>) - Enable or disable verification
+  of the redis server certificate. Defaults to true. Note that
+  verification checks the server certificate chain against the
+  configured CA; the server hostname is not checked against the
+  certificate (a hiredis limitation). For example:
+
+        whitelistRedisTLSVerifyPeer(false)
+
+* whitelistRedisTLSServerName(<server name>) - Set the server name sent
+  via SNI (Server Name Indication). If not set, it defaults to the
+  server name configured with whitelistPersistDB(), unless that is an IP
+  address. For example:
+
+        whitelistRedisTLSServerName("redis.example.com")
 
 * whitelistPersistReplicated() - Store whitelist entries that have
   been replicated in the redis DB. By default, replicated whitelist 

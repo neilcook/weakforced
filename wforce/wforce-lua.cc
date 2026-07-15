@@ -755,6 +755,22 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistRedisPassword", [](const std::string& password) {
       g_bl_db.setRedisPassword(password);
     });
+    c_lua.writeFunction("blacklistRedisTLS", [client](bool enable) {
+      if (!client)
+        g_bl_db.setRedisTLS(enable);
+    });
+    c_lua.writeFunction("blacklistRedisTLSCA", [](const std::string& ca_file, boost::optional<std::string> ca_dir) {
+      g_bl_db.setRedisTLSCA(ca_file, ca_dir ? *ca_dir : std::string());
+    });
+    c_lua.writeFunction("blacklistRedisTLSClientCert", [](const std::string& cert_file, const std::string& key_file) {
+      g_bl_db.setRedisTLSClientCert(cert_file, key_file);
+    });
+    c_lua.writeFunction("blacklistRedisTLSVerifyPeer", [](bool verify) {
+      g_bl_db.setRedisTLSVerifyPeer(verify);
+    });
+    c_lua.writeFunction("blacklistRedisTLSServerName", [](const std::string& server_name) {
+      g_bl_db.setRedisTLSServerName(server_name);
+    });
     c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) { g_bl_db.setConnectTimeout(timeout_secs); });
     c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) { g_bl_db.setRWTimeout(timeout_secs, timeout_usecs); });
@@ -778,6 +794,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("blacklistRedisUsername", [](const std::string& username) {});
     c_lua.writeFunction("blacklistRedisPassword", [](const std::string& password) {});
+    c_lua.writeFunction("blacklistRedisTLS", [](bool enable) {});
+    c_lua.writeFunction("blacklistRedisTLSCA", [](const std::string& ca_file, boost::optional<std::string> ca_dir) {});
+    c_lua.writeFunction("blacklistRedisTLSClientCert", [](const std::string& cert_file, const std::string& key_file) {});
+    c_lua.writeFunction("blacklistRedisTLSVerifyPeer", [](bool verify) {});
+    c_lua.writeFunction("blacklistRedisTLSServerName", [](const std::string& server_name) {});
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
     c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});
@@ -954,6 +975,22 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("whitelistRedisPassword", [](const std::string& password) {
       g_wl_db.setRedisPassword(password);
     });
+    c_lua.writeFunction("whitelistRedisTLS", [client](bool enable) {
+      if (!client)
+        g_wl_db.setRedisTLS(enable);
+    });
+    c_lua.writeFunction("whitelistRedisTLSCA", [](const std::string& ca_file, boost::optional<std::string> ca_dir) {
+      g_wl_db.setRedisTLSCA(ca_file, ca_dir ? *ca_dir : std::string());
+    });
+    c_lua.writeFunction("whitelistRedisTLSClientCert", [](const std::string& cert_file, const std::string& key_file) {
+      g_wl_db.setRedisTLSClientCert(cert_file, key_file);
+    });
+    c_lua.writeFunction("whitelistRedisTLSVerifyPeer", [](bool verify) {
+      g_wl_db.setRedisTLSVerifyPeer(verify);
+    });
+    c_lua.writeFunction("whitelistRedisTLSServerName", [](const std::string& server_name) {
+      g_wl_db.setRedisTLSServerName(server_name);
+    });
     c_lua.writeFunction("whitelistPersistReplicated", []() { g_wl_db.persistReplicated(); });
     c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) { g_wl_db.setConnectTimeout(timeout_secs); });
     c_lua.writeFunction("whitelistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) { g_wl_db.setRWTimeout(timeout_secs, timeout_usecs); });
@@ -963,6 +1000,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("whitelistRedisUsername", [](const std::string& username) {});
     c_lua.writeFunction("whitelistRedisPassword", [](const std::string& password) {});
+    c_lua.writeFunction("whitelistRedisTLS", [](bool enable) {});
+    c_lua.writeFunction("whitelistRedisTLSCA", [](const std::string& ca_file, boost::optional<std::string> ca_dir) {});
+    c_lua.writeFunction("whitelistRedisTLSClientCert", [](const std::string& cert_file, const std::string& key_file) {});
+    c_lua.writeFunction("whitelistRedisTLSVerifyPeer", [](bool verify) {});
+    c_lua.writeFunction("whitelistRedisTLSServerName", [](const std::string& server_name) {});
     c_lua.writeFunction("whitelistPersistReplicated", []() {});
     c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) {});
     c_lua.writeFunction("whitelistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});

@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "config.h"
 #include "blackwhitelist.hh"
 #include "replication.hh"
 #include "replication_bl.hh"
@@ -32,6 +33,9 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <hiredis/hiredis.h>
+#ifdef HAVE_LIBHIREDIS_SSL
+#include <hiredis/hiredis_ssl.h>
+#endif
 #include <ostream>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -603,6 +607,70 @@ void BlackWhiteListDB::setRWTimeout(int timeout_secs, int timeout_usecs)
   redis_rw_timeout_secs = timeout_secs; // atomic
 }
 
+void BlackWhiteListDB::setRedisTLS(bool enable)
+{
+#ifndef HAVE_LIBHIREDIS_SSL
+  if (enable) {
+    errlog("setRedisTLS: wforce was built without Redis TLS support (hiredis_ssl)");
+    throw WforceException("Error: wforce was built without Redis TLS support (hiredis_ssl)");
+  }
+#endif
+  redis_tls = enable;
+}
+
+#ifdef HAVE_LIBHIREDIS_SSL
+namespace {
+  std::once_flag redis_ssl_init_flag;
+}
+
+bool BlackWhiteListDB::setupTLSConnection()
+{
+  std::call_once(redis_ssl_init_flag, []() { redisInitOpenSSL(); });
+
+  // Recreate the TLS context on every new connection so that config changes
+  // are picked up on reconnect, like the username/password used for AUTH
+  if (redis_ssl_context != nullptr) {
+    redisFreeSSLContext(redis_ssl_context);
+    redis_ssl_context = nullptr;
+  }
+  redisSSLContextError ssl_error = REDIS_SSL_CTX_NONE;
+  const char* ca_file = redis_tls_ca_file.empty() ? nullptr : redis_tls_ca_file.c_str();
+  const char* ca_dir = redis_tls_ca_dir.empty() ? nullptr : redis_tls_ca_dir.c_str();
+  const char* cert_file = redis_tls_cert_file.empty() ? nullptr : redis_tls_cert_file.c_str();
+  const char* key_file = redis_tls_key_file.empty() ? nullptr : redis_tls_key_file.c_str();
+  // We connect to the resolved IP address, so default the TLS server name (sent
+  // via SNI) to the configured server name, unless that is itself an IP
+  // address literal. Note that hiredis does not verify the certificate against
+  // the server name - only the certificate chain is verified
+  std::string sni_name = redis_tls_server_name;
+  if (sni_name.empty()) {
+    try {
+      ComboAddress ca(redis_server);
+    }
+    catch (const PDNSException& e) {
+      sni_name = redis_server;
+    }
+  }
+  const char* server_name = sni_name.empty() ? nullptr : sni_name.c_str();
+  redisSSLOptions ssl_options = {ca_file, ca_dir, cert_file, key_file, server_name,
+                                 redis_tls_verify_peer ? REDIS_SSL_VERIFY_PEER : REDIS_SSL_VERIFY_NONE};
+  redis_ssl_context = redisCreateSSLContextWithOptions(&ssl_options, &ssl_error);
+  if (redis_ssl_context == nullptr || ssl_error != REDIS_SSL_CTX_NONE) {
+    errlog("setupTLSConnection: could not create Redis TLS context: %s", redisSSLContextGetError(ssl_error));
+    if (redis_ssl_context != nullptr) {
+      redisFreeSSLContext(redis_ssl_context);
+      redis_ssl_context = nullptr;
+    }
+    return false;
+  }
+  if (redisInitiateSSLWithContext(redis_context, redis_ssl_context) != REDIS_OK) {
+    errlog("setupTLSConnection: could not initiate TLS to redis BlackWhiteListDB (%s:%d): %s", redis_server, redis_port, redis_context->errstr);
+    return false;
+  }
+  return true;
+}
+#endif
+
 bool BlackWhiteListDB::checkSetupContext()
 {
   if (redis_context == NULL || redis_context->err) {
@@ -669,6 +737,19 @@ bool BlackWhiteListDB::checkSetupContext()
         errlog("Could not enable Redis KeepAlive");
         throw WforceException("Error: Could not enable Redis KeepAlive in BlackWhitelist");
       }
+#ifdef HAVE_LIBHIREDIS_SSL
+      if (redis_tls) {
+        if (!setupTLSConnection()) {
+          redisFree(redis_context);
+          redis_context = NULL;
+          if (db_type == BLWLDBType::BLACKLIST)
+            incPrometheusRedisBLConnFailed();
+          else
+            incPrometheusRedisWLConnFailed();
+          return false;
+        }
+      }
+#endif
     }
   }
 
