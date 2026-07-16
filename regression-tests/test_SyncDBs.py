@@ -1,10 +1,10 @@
 import requests
 import socket
-import subprocess
 import sys
 import time
 import json
 from test_helper import ApiTestCase
+from test_helper import running_process
 
 class TestSyncDBs(ApiTestCase):
     def test_SyncDBs(self):
@@ -18,13 +18,10 @@ class TestSyncDBs(ApiTestCase):
         time.sleep(11);
         
         cmd3 = ("../wforce/wforce -D -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
-        proc3 = subprocess.Popen(cmd3, close_fds=True)
-        time.sleep(5)
+        with running_process(cmd3, close_fds=True):
+            time.sleep(5)
 
-        res2 = self.writeCmdToConsole3("showStringStatsDB()");
-        res2_ss = res2.decode().split("DB Name", 1)[1]
+            res2 = self.writeCmdToConsole3("showStringStatsDB()");
+            res2_ss = res2.decode().split("DB Name", 1)[1]
 
-        self.assertEqual(res1_ss == res2_ss, True)
-
-        proc3.terminate()
-        proc3.wait()
+            self.assertEqual(res1_ss == res2_ss, True)

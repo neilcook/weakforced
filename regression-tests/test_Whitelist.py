@@ -1,10 +1,10 @@
 import requests
 import socket
-import subprocess
 import sys
 import time
 import json
 from test_helper import ApiTestCase
+from test_helper import running_process
 
 class TestWhitelist(ApiTestCase):
 
@@ -165,25 +165,16 @@ class TestWhitelist(ApiTestCase):
 
     def test_PersistWhitelist(self):
         cmd3 = ("../wforce/wforce -D -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
-        proc3 = subprocess.Popen(cmd3, close_fds=True)
-        time.sleep(1)
-        
-        r = self.addWLEntryIPPersist("99.99.99.99", 10, "test whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-        
-        print("Killing process")
-        proc3.terminate()
-        print("Waiting for process")
-        proc3.wait()
+        with running_process(cmd3, close_fds=True):
+            time.sleep(1)
 
-        proc3 = subprocess.Popen(cmd3, close_fds=True)
+            r = self.addWLEntryIPPersist("99.99.99.99", 10, "test whitelist")
+            j = r.json()
+            self.assertEqual(j['status'], 'ok')
 
-        time.sleep(1)
-        
-        r = self.getWLFuncPersist()
-        j = r.json()
-        self.assertNotEqual(str.find(json.dumps(j),'99.99.99.99'), -1)
+        with running_process(cmd3, close_fds=True):
+            time.sleep(1)
 
-        proc3.terminate()
-        proc3.wait()
+            r = self.getWLFuncPersist()
+            j = r.json()
+            self.assertNotEqual(str.find(json.dumps(j),'99.99.99.99'), -1)

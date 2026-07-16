@@ -1,11 +1,14 @@
 import os
 import shutil
-import socket
-import subprocess
 import time
 import pytest
 from mimesis import Internet
 from test_helper import ApiTestCase
+from test_helper import running_process
+from test_helper import running_process_on_port
+from test_helper import start_process
+from test_helper import terminate_process
+from test_helper import wait_for_port
 
 
 def built_with_redis_tls():
@@ -15,16 +18,6 @@ def built_with_redis_tls():
             return '#define HAVE_LIBHIREDIS_SSL 1' in f.read()
     except OSError:
         return False
-
-
-def wait_for_port(port, timeout_secs=10):
-    for _ in range(timeout_secs * 2):
-        try:
-            with socket.create_connection(('127.0.0.1', port), timeout=1):
-                return True
-        except OSError:
-            time.sleep(0.5)
-    return False
 
 
 @pytest.mark.skipif(not built_with_redis_tls(),
@@ -39,49 +32,41 @@ class TestBlacklistTLS(ApiTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.redis_proc = subprocess.Popen(
+        proc = start_process(
             ["redis-server", "--port", "0", "--tls-port", "6390",
              "--tls-cert-file", "certs/server.crt",
              "--tls-key-file", "certs/server.key",
              "--tls-ca-cert-file", "certs/root.pem",
              "--save", ""],
             close_fds=True)
-        if not wait_for_port(6390):
-            cls.redis_proc.terminate()
-            cls.redis_proc.wait()
-            cls.redis_proc = None
-            raise RuntimeError("TLS redis-server did not start on port 6390")
+        try:
+            if not wait_for_port(6390):
+                raise RuntimeError("TLS redis-server did not start on port 6390")
+        except Exception:
+            terminate_process(proc)
+            raise
+        cls.redis_proc = proc
 
     @classmethod
     def tearDownClass(cls):
         if cls.redis_proc is not None:
-            cls.redis_proc.terminate()
-            cls.redis_proc.wait()
+            terminate_process(cls.redis_proc)
 
     def test_PersistBlacklistTLS(self):
         cmd5 = ("../wforce/wforce -D -C ./wforce5.conf -R ../wforce/regexes.yaml").split()
-        proc5 = subprocess.Popen(cmd5, close_fds=True)
-        self.assertTrue(wait_for_port(self.server5_port),
-                        "wforce5 (TLS persist instance) did not start")
 
-        for i in range(100):
-            random_ip = Internet().ip_v4()
-            r = self.addBLEntryIPPersistTLS(random_ip, 30, "test tls blacklist")
-            j = r.json()
-            self.assertEqual(j['status'], 'ok')
-
-        proc5.terminate()
-        proc5.wait()
+        with running_process_on_port(cmd5, self.server5_port, close_fds=True):
+            for i in range(100):
+                random_ip = Internet().ip_v4()
+                r = self.addBLEntryIPPersistTLS(random_ip, 30, "test tls blacklist")
+                j = r.json()
+                self.assertEqual(j['status'], 'ok')
 
         # The entries should be read back from redis over TLS on startup
-        proc5 = subprocess.Popen(cmd5, close_fds=True)
-        self.assertTrue(wait_for_port(self.server5_port),
-                        "wforce5 (TLS persist instance) did not restart")
-        time.sleep(1)
+        with running_process_on_port(cmd5, self.server5_port, close_fds=True):
+            time.sleep(1)
 
-        r = self.getBLFuncPersistTLS()
-        j = r.json()
-        self.assertEqual(len(j['bl_entries']), 100)
+            r = self.getBLFuncPersistTLS()
+            j = r.json()
+            self.assertEqual(len(j['bl_entries']), 100)
 
-        proc5.terminate()
-        proc5.wait()
