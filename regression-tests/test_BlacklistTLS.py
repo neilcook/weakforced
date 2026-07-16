@@ -70,3 +70,18 @@ class TestBlacklistTLS(ApiTestCase):
             j = r.json()
             self.assertEqual(len(j['bl_entries']), 100)
 
+    def test_RedisTLSVerifyPeerDisabled(self):
+        cmd_verify = ("../wforce/wforce -D -C ./wforce5-verify-missing-ca.conf -R ../wforce/regexes.yaml").split()
+        with running_process(cmd_verify, close_fds=True):
+            self.assertFalse(wait_for_port(self.server5_port, 3),
+                             "wforce started even though Redis peer verification had no trusted CA")
+
+        cmd_noverify = ("../wforce/wforce -D -C ./wforce5-noverify-missing-ca.conf -R ../wforce/regexes.yaml").split()
+        with running_process_on_port(cmd_noverify, self.server5_port, close_fds=True):
+            random_ip = Internet().ip_v4()
+            r = self.addBLEntryIPPersistTLS(random_ip, 5, "test tls no verify")
+            j = r.json()
+            self.assertEqual(j['status'], 'ok')
+            r = self.delBLEntryIPPersistTLS(random_ip)
+            j = r.json()
+            self.assertEqual(j['status'], 'ok')
