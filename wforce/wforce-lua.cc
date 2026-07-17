@@ -689,7 +689,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       auto bl = g_bl_db.getJA3Entries();
       return getWLBLKeys(bl, "ja3");
     });
-    c_lua.writeFunction("getIPLoginBlacklist", []() {
+    c_lua.writeFunction("getIPJA3Blacklist", []() {
       auto bl = g_bl_db.getIPJA3Entries();
       return getWLBLKeys(bl, "ipja3");
     });
