@@ -52,6 +52,11 @@ std::string BlackWhiteListDB::ipStringStr(const ComboAddress& ca, const std::str
   return ca.toString() + ":" + str;
 }
 
+std::string BlackWhiteListDB::ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const
+{
+  return Netmask(ca, prefix).toStringNetwork() + ":" + str;
+}
+
 void BlackWhiteListDB::addEntry(const Netmask& nm, time_t seconds, const std::string& reason)
 {
   std::string key = nm.toStringNetwork();
@@ -82,6 +87,14 @@ BlackWhiteListDB::addEntry(const ComboAddress& ca, const std::string& login, tim
   addEntryLog(IP_LOGIN_BLWL, key, seconds, reason);
 }
 
+void
+BlackWhiteListDB::addEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix, time_t seconds, const std::string& reason)
+{
+  std::string key = ipStringStr(ca, prefix, login);
+  addEntryInternal(key, seconds, IP_LOGIN_BLWL, reason, true);
+  addEntryLog(IP_LOGIN_BLWL, key, seconds, reason);
+}
+
 void BlackWhiteListDB::addJA3Entry(const std::string& ja3, time_t seconds, const std::string& reason)
 {
   addEntryInternal(ja3, seconds, JA3_BLWL, reason, true);
@@ -92,6 +105,14 @@ void
 BlackWhiteListDB::addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, time_t seconds, const std::string& reason)
 {
   std::string key = ipStringStr(ca, ja3);
+  addEntryInternal(key, seconds, IP_JA3_BLWL, reason, true);
+  addEntryLog(IP_JA3_BLWL, key, seconds, reason);
+}
+
+void
+BlackWhiteListDB::addIPJA3Entry(const ComboAddress& ca, const std::string& ja3,  std::uint8_t prefix, time_t seconds, const std::string& reason)
+{
+  std::string key = ipStringStr(ca, prefix, ja3);
   addEntryInternal(key, seconds, IP_JA3_BLWL, reason, true);
   addEntryLog(IP_JA3_BLWL, key, seconds, reason);
 }
@@ -200,6 +221,11 @@ bool BlackWhiteListDB::checkEntry(const ComboAddress& ca, const std::string& log
   return _checkEntry(ipStringStr(ca, login), ip_login_list);
 }
 
+bool BlackWhiteListDB::checkEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix) const
+{
+  return _checkEntry(ipStringStr(ca, prefix, login), ip_login_list);
+}
+
 bool BlackWhiteListDB::checkJA3Entry(const std::string& ja3) const
 {
   return _checkEntry(ja3, ja3_list);
@@ -208,6 +234,11 @@ bool BlackWhiteListDB::checkJA3Entry(const std::string& ja3) const
 bool BlackWhiteListDB::checkIPJA3Entry(const ComboAddress& ca, const std::string& ja3) const
 {
   return _checkEntry(ipStringStr(ca, ja3), ip_ja3_list);
+}
+
+bool BlackWhiteListDB::checkIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix) const
+{
+  return _checkEntry(ipStringStr(ca, prefix, ja3), ip_ja3_list);
 }
 
 bool BlackWhiteListDB::_checkEntry(const std::string& key, const blackwhitelist_t& blackwhitelist) const
@@ -242,6 +273,11 @@ bool BlackWhiteListDB::getEntry(const ComboAddress& ca, const std::string& login
   return _getEntry(ipStringStr(ca, login), ip_login_list, ret);
 }
 
+bool BlackWhiteListDB::getEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix, BlackWhiteListEntry& ret) const
+{
+  return _getEntry(ipStringStr(ca, prefix, login), ip_login_list, ret);
+}
+
 bool BlackWhiteListDB::getJA3Entry(const std::string& ja3, BlackWhiteListEntry& ret) const
 {
   return _getEntry(ja3, ja3_list, ret);
@@ -250,6 +286,11 @@ bool BlackWhiteListDB::getJA3Entry(const std::string& ja3, BlackWhiteListEntry& 
 bool BlackWhiteListDB::getIPJA3Entry(const ComboAddress& ca, const std::string& ja3, BlackWhiteListEntry& ret) const
 {
   return _getEntry(ipStringStr(ca, ja3), ip_ja3_list, ret);
+}
+
+bool BlackWhiteListDB::getIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix, BlackWhiteListEntry& ret) const
+{
+  return _getEntry(ipStringStr(ca, prefix, ja3), ip_ja3_list, ret);
 }
 
 bool BlackWhiteListDB::_getEntry(const std::string& key, const blackwhitelist_t& blackwhitelist,
@@ -293,6 +334,13 @@ void BlackWhiteListDB::deleteEntry(const ComboAddress& ca, const std::string& lo
   deleteEntryInternal(key, IP_LOGIN_BLWL, true);
 }
 
+void BlackWhiteListDB::deleteEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix)
+{
+  std::string key = ipStringStr(ca, prefix, login);
+
+  deleteEntryInternal(key, IP_LOGIN_BLWL, true);
+}
+
 void BlackWhiteListDB::deleteJA3Entry(const std::string& ja3)
 {
   deleteEntryInternal(ja3, JA3_BLWL, true);
@@ -301,6 +349,13 @@ void BlackWhiteListDB::deleteJA3Entry(const std::string& ja3)
 void BlackWhiteListDB::deleteIPJA3Entry(const ComboAddress& ca, const std::string& ja3)
 {
   std::string key = ipStringStr(ca, ja3);
+
+  deleteEntryInternal(key, IP_JA3_BLWL, true);
+}
+
+void BlackWhiteListDB::deleteIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix)
+{
+  std::string key = ipStringStr(ca, prefix, ja3);
 
   deleteEntryInternal(key, IP_JA3_BLWL, true);
 }
@@ -406,6 +461,11 @@ time_t BlackWhiteListDB::getExpiration(const ComboAddress& ca, const std::string
   return _getExpiration(ipStringStr(ca, login), ip_login_list);
 }
 
+time_t BlackWhiteListDB::getExpiration(const ComboAddress& ca, const std::string& login, std::uint8_t prefix) const
+{
+  return _getExpiration(ipStringStr(ca, prefix, login), ip_login_list);
+}
+
 time_t BlackWhiteListDB::getJA3Expiration(const std::string& ja3) const
 {
   return _getExpiration(ja3, ja3_list);
@@ -414,6 +474,11 @@ time_t BlackWhiteListDB::getJA3Expiration(const std::string& ja3) const
 time_t BlackWhiteListDB::getIPJA3Expiration(const ComboAddress& ca, const std::string& ja3) const
 {
   return _getExpiration(ipStringStr(ca, ja3), ip_ja3_list);
+}
+
+time_t BlackWhiteListDB::getIPJA3Expiration(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix) const
+{
+  return _getExpiration(ipStringStr(ca, prefix, ja3), ip_ja3_list);
 }
 
 // to_time_t is missing in some versions of boost

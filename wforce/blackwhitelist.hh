@@ -92,33 +92,43 @@ public:
   void addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason);
   void addEntry(const std::string& login, time_t seconds, const std::string& reason);
   void addEntry(const ComboAddress& ca, const std::string& login, time_t seconds, const std::string& reason);
+  void addEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix, time_t seconds, const std::string& reason);
   void addJA3Entry(const std::string& ja3, time_t seconds, const std::string& reason);
   void addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, time_t seconds, const std::string& reason);
+  void addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix, time_t seconds, const std::string& reason);
 
   bool checkEntry(const ComboAddress& ca) const;
   bool checkEntry(const std::string& login) const;
   bool checkEntry(const ComboAddress& ca, const std::string& login) const;
+  bool checkEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix) const;
   bool checkJA3Entry(const std::string& ja3) const;
   bool checkIPJA3Entry(const ComboAddress& ca, const std::string& ja3) const;
+  bool checkIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix) const;
 
   bool getEntry(const ComboAddress& ca, BlackWhiteListEntry& ret) const;
   bool getEntry(const std::string& login, BlackWhiteListEntry& ret) const;
   bool getEntry(const ComboAddress& ca, const std::string& login, BlackWhiteListEntry& ret) const;
+  bool getEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix, BlackWhiteListEntry& ret) const;
   bool getJA3Entry(const std::string& ja3, BlackWhiteListEntry& ret) const;
   bool getIPJA3Entry(const ComboAddress& ca, const std::string& ja3, BlackWhiteListEntry& ret) const;
+  bool getIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix, BlackWhiteListEntry& ret) const;
 
   void deleteEntry(const Netmask& nm);
   void deleteEntry(const ComboAddress& ca);
   void deleteEntry(const std::string& login);
   void deleteEntry(const ComboAddress& ca, const std::string& login);
+  void deleteEntry(const ComboAddress& ca, const std::string& login, std::uint8_t prefix);
   void deleteJA3Entry(const std::string& ja3);
   void deleteIPJA3Entry(const ComboAddress& ca, const std::string& ja3);
+  void deleteIPJA3Entry(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix);
 
   time_t getExpiration(const ComboAddress& ca) const;
   time_t getExpiration(const std::string& login) const;
   time_t getExpiration(const ComboAddress& ca, const std::string& login) const;
+  time_t getExpiration(const ComboAddress& ca, const std::string& login, std::uint8_t prefix) const;
   time_t getJA3Expiration(const std::string& ja3) const;
   time_t getIPJA3Expiration(const ComboAddress& ca, const std::string& ja3) const;
+  time_t getIPJA3Expiration(const ComboAddress& ca, const std::string& ja3, std::uint8_t prefix) const;
 
   void addEntryInternal(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason, bool replicate);
   void deleteEntryInternal(const std::string& key, BLWLType bl_type, bool replicate);
@@ -227,6 +237,7 @@ private:
   void deleteEntryLog(BLWLType blt, const std::string& key) const;
   void expireEntryLog(BLWLType blt, const std::string& key) const;
   std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
+  std::string ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const;
   bool checkSetupContext();
   bool setupTLSConnection();
   bool addPersistEntry(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason);

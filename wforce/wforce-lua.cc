@@ -597,12 +597,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       g_bl_db.addEntry(ca, login, seconds, reason);
     });
 
+    c_lua.writeFunction("blacklistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix, unsigned int seconds, const std::string& reason) {
+      g_bl_db.addEntry(ca, login, prefix, seconds, reason);
+    });
+
     c_lua.writeFunction("blacklistJA3", [](const std::string& ja3, unsigned int seconds, const std::string& reason) {
       g_bl_db.addJA3Entry(ja3, seconds, reason);
     });
 
     c_lua.writeFunction("blacklistIPJA3", [](const ComboAddress& ca, const std::string& ja3, unsigned int seconds, const std::string& reason) {
       g_bl_db.addIPJA3Entry(ca, ja3, seconds, reason);
+    });
+
+    c_lua.writeFunction("blacklistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix, unsigned int seconds, const std::string& reason) {
+      g_bl_db.addIPJA3Entry(ca, ja3, prefix, seconds, reason);
     });
 
     c_lua.writeFunction("unblacklistNetmask", [](const Netmask& nm) {
@@ -621,12 +629,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       g_bl_db.deleteEntry(ca, login);
     });
 
+    c_lua.writeFunction("unblacklistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {
+      g_bl_db.deleteEntry(ca, login, prefix);
+    });
+
     c_lua.writeFunction("unblacklistJA3", [](const std::string& ja3) {
       g_bl_db.deleteJA3Entry(ja3);
     });
 
     c_lua.writeFunction("unblacklistIPJA3", [](const ComboAddress& ca, const std::string& ja3) {
       g_bl_db.deleteIPJA3Entry(ca, ja3);
+    });
+
+    c_lua.writeFunction("unblacklistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {
+      g_bl_db.deleteIPJA3Entry(ca, ja3, prefix);
     });
 
     c_lua.writeFunction("checkBlacklistIP", [](const ComboAddress& ca) {
@@ -641,12 +657,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       return g_bl_db.checkEntry(ca, login);
     });
 
+    c_lua.writeFunction("checkBlacklistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {
+      return g_bl_db.checkEntry(ca, login, prefix);
+    });
+
     c_lua.writeFunction("checkBlacklistJA3", [](const std::string& ja3) {
       return g_bl_db.checkJA3Entry(ja3);
     });
 
     c_lua.writeFunction("checkBlacklistIPJA3", [](const ComboAddress& ca, const std::string& ja3) {
       return g_bl_db.checkIPJA3Entry(ca, ja3);
+    });
+
+    c_lua.writeFunction("checkBlacklistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {
+      return g_bl_db.checkIPJA3Entry(ca, ja3, prefix);
     });
 
     c_lua.writeFunction("getIPBlacklist", []() {
@@ -699,10 +723,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
     });
 
+    c_lua.writeFunction("blacklistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix, unsigned int seconds, const std::string& reason) {
+    });
+
     c_lua.writeFunction("blacklistJA3", [](const std::string& login, unsigned int seconds, const std::string& reason) {
     });
 
     c_lua.writeFunction("blacklistIPJA3", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
+    });
+
+    c_lua.writeFunction("blacklistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix, unsigned int seconds, const std::string& reason) {
     });
 
     c_lua.writeFunction("unblacklistNetmask", [](const Netmask& nm) {
@@ -717,10 +747,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("unblacklistIPLogin", [](const ComboAddress& ca) {
     });
 
+    c_lua.writeFunction("unblacklistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {
+    });
+
     c_lua.writeFunction("unblacklistJA3", [](const std::string& login) {
     });
 
     c_lua.writeFunction("unblacklistIPJA3", [](const ComboAddress& ca) {
+    });
+
+    c_lua.writeFunction("unblacklistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {
     });
 
     c_lua.writeFunction("checkBlacklistIP", [](const ComboAddress& ca) {});
@@ -729,9 +765,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
     c_lua.writeFunction("checkBlacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {});
 
+    c_lua.writeFunction("checkBlacklistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {});
+
     c_lua.writeFunction("checkBlacklistJA3", [](const std::string& login) {});
 
     c_lua.writeFunction("checkBlacklistIPJA3", [](const ComboAddress& ca, const std::string& login) {});
+
+    c_lua.writeFunction("checkBlacklistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {});
 
     c_lua.writeFunction("getIPBlacklist", []() {});
     c_lua.writeFunction("getLoginBlacklist", []() {});
@@ -837,12 +877,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       g_wl_db.addEntry(ca, login, seconds, reason);
     });
 
+    c_lua.writeFunction("whitelistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix, unsigned int seconds, const std::string& reason) {
+      g_wl_db.addEntry(ca, login, prefix, seconds, reason);
+    });
+
     c_lua.writeFunction("whitelistJA3", [](const std::string& ja3, unsigned int seconds, const std::string& reason) {
       g_wl_db.addJA3Entry(ja3, seconds, reason);
     });
 
     c_lua.writeFunction("whitelistIPJA3", [](const ComboAddress& ca, const std::string& ja3, unsigned int seconds, const std::string& reason) {
       g_wl_db.addIPJA3Entry(ca, ja3, seconds, reason);
+    });
+
+    c_lua.writeFunction("whitelistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix, unsigned int seconds, const std::string& reason) {
+      g_wl_db.addIPJA3Entry(ca, ja3, prefix, seconds, reason);
     });
 
     c_lua.writeFunction("unwhitelistNetmask", [](const Netmask& nm) {
@@ -861,12 +909,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       g_wl_db.deleteEntry(ca, login);
     });
 
+    c_lua.writeFunction("unwhitelistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {
+      g_wl_db.deleteEntry(ca, login, prefix);
+    });
+
     c_lua.writeFunction("unwhitelistJA3", [](const std::string& ja3) {
       g_wl_db.deleteJA3Entry(ja3);
     });
 
     c_lua.writeFunction("unwhitelistIPJA3", [](const ComboAddress& ca, const std::string& ja3) {
       g_wl_db.deleteIPJA3Entry(ca, ja3);
+    });
+
+    c_lua.writeFunction("unwhitelistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {
+      g_wl_db.deleteIPJA3Entry(ca, ja3, prefix);
     });
 
     c_lua.writeFunction("checkWhitelistIP", [](const ComboAddress& ca) {
@@ -881,12 +937,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       return g_wl_db.checkEntry(ca, login);
     });
 
+    c_lua.writeFunction("checkWhitelistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {
+      return g_wl_db.checkEntry(ca, login, prefix);
+    });
+
     c_lua.writeFunction("checkWhitelistJA3", [](const std::string& ja3) {
       return g_wl_db.checkJA3Entry(ja3);
     });
 
     c_lua.writeFunction("checkWhitelistIPJA3", [](const ComboAddress& ca, const std::string& ja3) {
       return g_wl_db.checkIPJA3Entry(ca, ja3);
+    });
+
+    c_lua.writeFunction("checkWhitelistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {
+      return g_wl_db.checkIPJA3Entry(ca, ja3, prefix);
     });
 
     c_lua.writeFunction("getIPWhitelist", []() {
@@ -924,10 +988,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("whitelistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
     });
 
+    c_lua.writeFunction("whitelistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix, unsigned int seconds, const std::string& reason) {
+    });
+
     c_lua.writeFunction("whitelistJA3", [](const std::string& login, unsigned int seconds, const std::string& reason) {
     });
 
     c_lua.writeFunction("whitelistIPJA3", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
+    });
+
+    c_lua.writeFunction("whitelistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix, unsigned int seconds, const std::string& reason) {
     });
 
     c_lua.writeFunction("unwhitelistNetmask", [](const Netmask& nm) {
@@ -942,10 +1012,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("unwhitelistIPLogin", [](const ComboAddress& ca) {
     });
 
+    c_lua.writeFunction("unwhitelistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {
+    });
+
     c_lua.writeFunction("unwhitelistJA3", [](const std::string& login) {
     });
 
     c_lua.writeFunction("unwhitelistIPJA3", [](const ComboAddress& ca) {
+    });
+
+    c_lua.writeFunction("unwhitelistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {
     });
 
     c_lua.writeFunction("checkWhitelistIP", [](const ComboAddress& ca) {});
@@ -954,9 +1030,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
     c_lua.writeFunction("checkWhitelistIPLogin", [](const ComboAddress& ca, const std::string& login) {});
 
+    c_lua.writeFunction("checkWhitelistIPPrefixLogin", [](const ComboAddress& ca, const std::string& login, uint8_t prefix) {});
+
     c_lua.writeFunction("checkWhitelistJA3", [](const std::string& login) {});
 
     c_lua.writeFunction("checkWhitelistIPJA3", [](const ComboAddress& ca, const std::string& login) {});
+
+    c_lua.writeFunction("checkWhitelistIPPrefixJA3", [](const ComboAddress& ca, const std::string& ja3, uint8_t prefix) {});
 
     c_lua.writeFunction("getIPWhitelist", []() {});
     c_lua.writeFunction("getLoginWhitelist", []() {});
