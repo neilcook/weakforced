@@ -1,5 +1,6 @@
 from datetime import datetime
 from contextlib import contextmanager
+from functools import wraps
 import os
 import requests
 import socket
@@ -49,6 +50,14 @@ def running_process_on_port(cmd, port, startup_timeout_secs=10, **popen_kwargs):
         if not wait_for_port(port, startup_timeout_secs):
             raise RuntimeError("process did not start on port %d" % port)
         yield proc
+
+
+def with_prefix_config_server(test_func):
+    @wraps(test_func)
+    def wrapper(self, *args, **kwargs):
+        with self.runningPrefixConfig():
+            return test_func(self, *args, **kwargs)
+    return wrapper
 
 
 class ApiTestCase(unittest.TestCase):
@@ -152,6 +161,10 @@ class ApiTestCase(unittest.TestCase):
             self.url6("/?command=allow"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
+
+    def runningPrefixConfig(self):
+        cmd6 = ("../wforce/wforce -D -C ./wforce6.conf -R ../wforce/regexes.yaml").split()
+        return running_process_on_port(cmd6, self.server6_port, close_fds=True)
 
     def allowFuncDeviceProtocol(self, login, remote, pwhash, device_id, protocol):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, device_id, protocol, False)

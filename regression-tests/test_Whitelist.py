@@ -5,6 +5,7 @@ import time
 import json
 from test_helper import ApiTestCase
 from test_helper import running_process
+from test_helper import with_prefix_config_server
 
 class TestWhitelist(ApiTestCase):
 
@@ -68,6 +69,7 @@ class TestWhitelist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+    @with_prefix_config_server
     def test_IPWhitelistDefaultPrefix(self):
         # With wforce6's /24 IPv4 and /64 IPv6 whitelist prefixes, IP-only
         # whitelist entries should override matching blacklist entries within
@@ -203,6 +205,7 @@ class TestWhitelist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+    @with_prefix_config_server
     def test_IPLoginWhitelistDefaultPrefix(self):
         # Non-explicit whitelistIPLogin() should use the configured default IP
         # prefix and override only the blacklist entry with the same login.
@@ -292,6 +295,7 @@ class TestWhitelist(ApiTestCase):
         j = r.json()
         self.assertEqual(j['status'], 'ok')
 
+    @with_prefix_config_server
     def test_IPJA3WhitelistDefaultPrefix(self):
         # Non-explicit whitelistIPJA3() should use the configured default IP
         # prefix and override only the blacklist entry with the same JA3 value.

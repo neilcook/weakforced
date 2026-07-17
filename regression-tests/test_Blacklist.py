@@ -6,6 +6,7 @@ import json
 from mimesis import Internet 
 from test_helper import ApiTestCase
 from test_helper import running_process
+from test_helper import with_prefix_config_server
 
 class TestBlacklist(ApiTestCase):
 
@@ -61,6 +62,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+    @with_prefix_config_server
     def test_IPBlacklistDefaultPrefix(self):
         # With wforce6's /24 IPv4 and /64 IPv6 blacklist prefixes, IP-only
         # blacklist entries should match other addresses in the configured
@@ -165,6 +167,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+    @with_prefix_config_server
     def test_IPLoginBlacklistDefaultPrefix(self):
         # Non-explicit blacklistIPLogin() should build its key using the
         # configured default IP prefix, while still requiring the login to
@@ -225,16 +228,21 @@ class TestBlacklist(ApiTestCase):
         j = r.json()
         self.assertEqual(j['status'], 'ok')
 
-        r = self.allowFunc('goodie', '192.168.72.15', "1234")
+    def test_IPNetmaskBlacklistConflict(self):
+        payload = {
+            'ip': '198.51.104.25',
+            'netmask': '198.51.104.0/24',
+            'login': 'netmask-login-bl',
+            'expire_secs': 60,
+            'reason': 'test netmask conflict'
+        }
+        r = self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
         j = r.json()
-        self.assertEqual(j['status'], 0)
-        r.close()
-
-        time.sleep(11)
-
-        r = self.allowFunc('goodie', '192.168.72.14', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], 0)
+        self.assertEqual(j['status'], 'failure')
+        self.assertIn('ip and netmask are mutually exclusive', j['reason'])
         r.close()
 
     def test_PersistBlacklist(self):
@@ -320,6 +328,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+    @with_prefix_config_server
     def test_IPJA3BlacklistDefaultPrefix(self):
         # Non-explicit blacklistIPJA3() should build its key using the
         # configured default IP prefix, while still requiring the JA3 value to
