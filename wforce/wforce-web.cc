@@ -481,6 +481,9 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
       if (haveLogin && haveJA3) {
         throw std::runtime_error("login and ja3 are mutually exclusive parameters");
       }
+      if (haveIP && haveNetmask) {
+        throw std::runtime_error("ip and netmask are mutually exclusive parameters");
+      }
       if (haveLogin && (haveIP || haveNetmask)) {
         if (addCmd) {
           if (blacklist) {

@@ -124,7 +124,7 @@ paths:
   /command/delBLEntry:
     post:
       description: Delete a blacklist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        can be used in conjunction with login or JA3 hash.
+        can be used in conjunction with login or JA3 hash, but is mutually exclusive with ip.
       operationId: delBLEntry
       requestBody:
         description: Provide IP and/or login
@@ -157,7 +157,7 @@ paths:
   /command/addBLEntry:
     post:
       description: Add a blacklist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        can be used in conjunction with login or JA3 hash.
+        can be used in conjunction with login or JA3 hash, but is mutually exclusive with ip.
       operationId: addBLEntry
       requestBody:
         description: Provide IP and/or login and/or JA3 hash
@@ -190,7 +190,7 @@ paths:
   /command/delWLEntry:
     post:
       description: Delete a whitelist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        can be used in conjunction with login or JA3 hash.
+        can be used in conjunction with login or JA3 hash, but is mutually exclusive with ip.
       operationId: delWLEntry
       requestBody:
         description: Provide IP and/or login and/or JA3 hash
@@ -223,7 +223,7 @@ paths:
   /command/addWLEntry:
     post:
       description: Add a whitelist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        can be used in conjunction with login or JA3 hash.
+        can be used in conjunction with login or JA3 hash, but is mutually exclusive with ip.
       operationId: addWLEntry
       requestBody:
         description: Provide IP and/or login and/or JA3 hash
@@ -761,8 +761,8 @@ components:
         ja3:
           type: string
       example:
-        ip: 127.0.0.1
         netmask: 2001:503:ba3e/64
+        login: alice
     AddBLWLEntryParams:
       type: object
       properties:
@@ -779,8 +779,8 @@ components:
         reason:
           type: string
       example:
-        ip: 127.0.0.1
         netmask: 2001:503:ba3e::/64
+        login: alice
         expire_secs: 3600
         reason: Is there ever a good reason
     CustomError:
