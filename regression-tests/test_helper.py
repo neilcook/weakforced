@@ -439,6 +439,28 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addBLEntryNetmaskLogin(self, netmask, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryNetmaskJA3(self, netmask, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryIP(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -526,6 +548,24 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def delBLEntryNetmaskLogin(self, netmask, login):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delBLEntryNetmaskJA3(self, netmask, ja3):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def delBLEntryIP(self, ip):
         payload = dict()
         payload['ip'] = ip
@@ -565,6 +605,28 @@ class ApiTestCase(unittest.TestCase):
         payload = dict()
         payload['ja3'] = ja3
         payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addWLEntryNetmaskLogin(self, netmask, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addWLEntryNetmaskJA3(self, netmask, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
         payload['expire_secs'] = expire_secs
         payload['reason'] = reason
         return self.session.post(
@@ -626,6 +688,24 @@ class ApiTestCase(unittest.TestCase):
         payload = dict()
         payload['login'] = login
         payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delWLEntryNetmaskLogin(self, netmask, login):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delWLEntryNetmaskJA3(self, netmask, ja3):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
         return self.session.post(
             self.url("/?command=delWLEntry"),
             data=json.dumps(payload),

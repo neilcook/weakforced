@@ -124,7 +124,7 @@ paths:
   /command/delBLEntry:
     post:
       description: Delete a blacklist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        and other parameters are mutually exclusive.
+        can be used in conjunction with login or JA3 hash.
       operationId: delBLEntry
       requestBody:
         description: Provide IP and/or login
@@ -157,7 +157,7 @@ paths:
   /command/addBLEntry:
     post:
       description: Add a blacklist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        and other parameters are mutually exclusive.
+        can be used in conjunction with login or JA3 hash.
       operationId: addBLEntry
       requestBody:
         description: Provide IP and/or login and/or JA3 hash
@@ -190,7 +190,7 @@ paths:
   /command/delWLEntry:
     post:
       description: Delete a whitelist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        and other parameters are mutually exclusive.
+        can be used in conjunction with login or JA3 hash.
       operationId: delWLEntry
       requestBody:
         description: Provide IP and/or login and/or JA3 hash
@@ -223,7 +223,7 @@ paths:
   /command/addWLEntry:
     post:
       description: Add a whitelist entry for an IP and/or login and/or JA3 hash. Note that netmask
-        and other parameters are mutually exclusive.
+        can be used in conjunction with login or JA3 hash.
       operationId: addWLEntry
       requestBody:
         description: Provide IP and/or login and/or JA3 hash

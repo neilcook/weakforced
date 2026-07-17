@@ -199,6 +199,32 @@ class TestBlacklist(ApiTestCase):
         j = r.json()
         self.assertEqual(j['r_attrs']['status'], 'ok')
 
+    def test_NetmaskLoginBlacklist(self):
+        # The HTTP addBLEntry parser should use an explicit netmask with login
+        # as an IP/login prefix entry, not as a login-only blacklist.
+        r = self.addBLEntryNetmaskLogin("198.51.104.0/24", "netmask-login-bl", 60, "test netmask login blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFunc('netmask-login-bl', '198.51.104.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFunc('netmask-login-other-bl', '198.51.104.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFunc('netmask-login-bl', '198.51.105.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.delBLEntryNetmaskLogin("198.51.104.0/24", "netmask-login-bl")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
         r = self.allowFunc('goodie', '192.168.72.15', "1234")
         j = r.json()
         self.assertEqual(j['status'], 0)
@@ -327,6 +353,32 @@ class TestBlacklist(ApiTestCase):
         r = self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPJA3", attrs)
         j = r.json()
         self.assertEqual(j['r_attrs']['status'], 'ok')
+
+    def test_NetmaskJA3Blacklist(self):
+        # The HTTP addBLEntry parser should use an explicit netmask with JA3
+        # as an IP/JA3 prefix entry, not as a JA3-only blacklist.
+        r = self.addBLEntryNetmaskJA3("198.51.106.0/24", "netmask-ja3-bl", 60, "test netmask ja3 blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncAttrs('netmask-ja3-user-bl', '198.51.106.99', "1234", {"ja3":"netmask-ja3-bl"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFuncAttrs('netmask-ja3-user-bl', '198.51.106.99', "1234", {"ja3":"netmask-ja3-other-bl"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFuncAttrs('netmask-ja3-user-bl', '198.51.107.99', "1234", {"ja3":"netmask-ja3-bl"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.delBLEntryNetmaskJA3("198.51.106.0/24", "netmask-ja3-bl")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
 
     def test_ExplicitPrefixBlacklistFunctions(self):
         # Explicit-prefix blacklist Lua functions should honor the supplied

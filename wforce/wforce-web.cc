@@ -481,32 +481,64 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
       if (haveLogin && haveJA3) {
         throw std::runtime_error("login and ja3 are mutually exclusive parameters");
       }
-      if (haveLogin && haveIP) {
+      if (haveLogin && (haveIP || haveNetmask)) {
         if (addCmd) {
-          if (blacklist)
-            g_bl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
-          else
-            g_wl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+          if (blacklist) {
+            if (haveNetmask)
+              g_bl_db.addEntry(en_nm.getNetwork(), en_login, en_nm.getBits(), bl_seconds, bl_reason);
+            else
+              g_bl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+          }
+          else {
+            if (haveNetmask)
+              g_wl_db.addEntry(en_nm.getNetwork(), en_login, en_nm.getBits(), bl_seconds, bl_reason);
+            else
+              g_wl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+          }
         }
         else {
-          if (blacklist)
-            g_bl_db.deleteEntry(en_ca, en_login);
-          else
-            g_wl_db.deleteEntry(en_ca, en_login);
+          if (blacklist) {
+            if (haveNetmask)
+              g_bl_db.deleteEntry(en_nm.getNetwork(), en_login, en_nm.getBits());
+            else
+              g_bl_db.deleteEntry(en_ca, en_login);
+          }
+          else {
+            if (haveNetmask)
+              g_wl_db.deleteEntry(en_nm.getNetwork(), en_login, en_nm.getBits());
+            else
+              g_wl_db.deleteEntry(en_ca, en_login);
+          }
         }
       }
-      else if (haveJA3 && haveIP) {
+      else if (haveJA3 && (haveIP || haveNetmask)) {
         if (addCmd) {
-          if (blacklist)
-            g_bl_db.addIPJA3Entry(en_ca, en_ja3, bl_seconds, bl_reason);
-          else
-            g_wl_db.addIPJA3Entry(en_ca, en_ja3, bl_seconds, bl_reason);
+          if (blacklist) {
+            if (haveNetmask)
+              g_bl_db.addIPJA3Entry(en_nm.getNetwork(), en_ja3, en_nm.getBits(), bl_seconds, bl_reason);
+            else
+              g_bl_db.addIPJA3Entry(en_ca, en_ja3, bl_seconds, bl_reason);
+          }
+          else {
+            if (haveNetmask)
+              g_wl_db.addIPJA3Entry(en_nm.getNetwork(), en_ja3, en_nm.getBits(), bl_seconds, bl_reason);
+            else
+              g_wl_db.addIPJA3Entry(en_ca, en_ja3, bl_seconds, bl_reason);
+          }
         }
         else {
-          if (blacklist)
-            g_bl_db.deleteIPJA3Entry(en_ca, en_ja3);
-          else
-            g_wl_db.deleteIPJA3Entry(en_ca, en_ja3);
+          if (blacklist) {
+            if (haveNetmask)
+              g_bl_db.deleteIPJA3Entry(en_nm.getNetwork(), en_ja3, en_nm.getBits());
+            else
+              g_bl_db.deleteIPJA3Entry(en_ca, en_ja3);
+          }
+          else {
+            if (haveNetmask)
+              g_wl_db.deleteIPJA3Entry(en_nm.getNetwork(), en_ja3, en_nm.getBits());
+            else
+              g_wl_db.deleteIPJA3Entry(en_ca, en_ja3);
+          }
         }
       }
       else if (haveLogin) {

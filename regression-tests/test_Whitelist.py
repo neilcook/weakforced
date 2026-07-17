@@ -255,6 +255,43 @@ class TestWhitelist(ApiTestCase):
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPLogin", other_attrs).close()
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPLogin", different_prefix_attrs).close()
 
+    def test_NetmaskLoginWhitelist(self):
+        # The HTTP addWLEntry parser should use an explicit netmask with login
+        # as an IP/login prefix entry. If it were login-only, the same login in
+        # the different blacklisted prefix would be incorrectly allowed.
+        r = self.addBLEntryNetmask("198.51.108.0/24", 60, "test netmask login whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+        r = self.addBLEntryNetmask("198.51.109.0/24", 60, "test netmask login whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.addWLEntryNetmaskLogin("198.51.108.0/24", "netmask-login-wl", 60, "test netmask login whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFunc('netmask-login-wl', '198.51.108.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        self.assertEqual(j['r_attrs']['whitelisted'], '1')
+        r.close()
+
+        r = self.allowFunc('netmask-login-other-wl', '198.51.108.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        self.assertEqual(j['r_attrs']['blacklisted'], '1')
+        r.close()
+
+        r = self.allowFunc('netmask-login-wl', '198.51.109.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        self.assertEqual(j['r_attrs']['blacklisted'], '1')
+        r.close()
+
+        r = self.delWLEntryNetmaskLogin("198.51.108.0/24", "netmask-login-wl")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
     def test_IPJA3WhitelistDefaultPrefix(self):
         # Non-explicit whitelistIPJA3() should use the configured default IP
         # prefix and override only the blacklist entry with the same JA3 value.
@@ -306,6 +343,43 @@ class TestWhitelist(ApiTestCase):
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPJA3", attrs).close()
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPJA3", other_attrs).close()
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPJA3", different_prefix_attrs).close()
+
+    def test_NetmaskJA3Whitelist(self):
+        # The HTTP addWLEntry parser should use an explicit netmask with JA3
+        # as an IP/JA3 prefix entry. If it were JA3-only, the same JA3 in the
+        # different blacklisted prefix would be incorrectly allowed.
+        r = self.addBLEntryNetmask("198.51.110.0/24", 60, "test netmask ja3 whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+        r = self.addBLEntryNetmask("198.51.111.0/24", 60, "test netmask ja3 whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.addWLEntryNetmaskJA3("198.51.110.0/24", "netmask-ja3-wl", 60, "test netmask ja3 whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncAttrs('netmask-ja3-user-wl', '198.51.110.99', "1234", {"ja3":"netmask-ja3-wl"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        self.assertEqual(j['r_attrs']['whitelisted'], '1')
+        r.close()
+
+        r = self.allowFuncAttrs('netmask-ja3-user-wl', '198.51.110.99', "1234", {"ja3":"netmask-ja3-other-wl"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        self.assertEqual(j['r_attrs']['blacklisted'], '1')
+        r.close()
+
+        r = self.allowFuncAttrs('netmask-ja3-user-wl', '198.51.111.99', "1234", {"ja3":"netmask-ja3-wl"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        self.assertEqual(j['r_attrs']['blacklisted'], '1')
+        r.close()
+
+        r = self.delWLEntryNetmaskJA3("198.51.110.0/24", "netmask-ja3-wl")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
 
     def test_ExplicitPrefixWhitelistFunctions(self):
         # Explicit-prefix whitelist Lua functions should honor the supplied
