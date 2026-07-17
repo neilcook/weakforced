@@ -588,9 +588,9 @@ void BlackWhiteListDB::expireEntryLog(BLWLType blt, const std::string& key) cons
   std::string event_name;
 
   if (db_type == BLWLDBType::BLACKLIST)
-    event_name = "deleteBLEntry";
+    event_name = "expireBLEntry";
   else
-    event_name = "deleteWLEntry";
+    event_name = "expireWLEntry";
 
   os << event_name << " " << blwl_name << ": " << key_name << "=" << key;
   noticelog(os.str().c_str());
