@@ -69,6 +69,44 @@ class TestWhitelist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+        r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.addBLEntryIP("2001:503:ba3e::2:30", 10, "test blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.addWLEntryIP("192.168.72.14", 10, "test whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.addWLEntryIP("2001:503:ba3e::2:30", 10, "test whitelist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFunc('goodie', '192.168.72.14', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        time.sleep(11);
+
+        r = self.allowFunc('goodie', '192.168.72.14', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
     @with_prefix_config_server
     def test_IPWhitelistDefaultPrefix(self):
         # With wforce6's /24 IPv4 and /64 IPv6 whitelist prefixes, IP-only
@@ -122,44 +160,6 @@ class TestWhitelist(ApiTestCase):
         self.assertEqual(j['r_attrs']['blacklisted'], '1')
         r.close()
 
-        r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
-        r = self.addBLEntryIP("2001:503:ba3e::2:30", 10, "test blacklist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-        
-        r = self.addWLEntryIP("192.168.72.14", 10, "test whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
-        r = self.addWLEntryIP("2001:503:ba3e::2:30", 10, "test whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
-        r = self.allowFunc('goodie', '192.168.72.14', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], 0)
-        r.close()
-
-        r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], 0)
-        r.close()
-
-        time.sleep(11);
-
-        r = self.allowFunc('goodie', '192.168.72.14', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], 0)
-        r.close()
-        
-        r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], 0)
-        r.close()
-    
     def test_LoginWhitelist(self):
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
@@ -213,8 +213,8 @@ class TestWhitelist(ApiTestCase):
             "ip": "203.0.115.14",
             "same_prefix_ip": "203.0.115.99",
             "different_prefix_ip": "203.0.116.14",
-            "login": "prefixwl-login",
-            "other_login": "prefixwl-other-login"
+            "login": "prefixwl-login@foobar.com",
+            "other_login": "prefixwl-other-login@foobar.com"
         }
         r = self.customFuncPrefixConfigWithName("AddPrefixBlacklistIPLogin", attrs)
         j = r.json()
@@ -224,7 +224,7 @@ class TestWhitelist(ApiTestCase):
         self.assertEqual(j['r_attrs']['status'], 'ok')
 
         other_attrs = dict(attrs)
-        other_attrs["login"] = "prefixwl-other-login"
+        other_attrs["login"] = "prefixwl-other-login@foobar.com"
         r = self.customFuncPrefixConfigWithName("AddPrefixBlacklistIPLogin", other_attrs)
         j = r.json()
         self.assertEqual(j['r_attrs']['status'], 'ok')
@@ -259,41 +259,13 @@ class TestWhitelist(ApiTestCase):
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPLogin", different_prefix_attrs).close()
 
     def test_NetmaskLoginWhitelist(self):
-        # The HTTP addWLEntry parser should use an explicit netmask with login
-        # as an IP/login prefix entry. If it were login-only, the same login in
-        # the different blacklisted prefix would be incorrectly allowed.
-        r = self.addBLEntryNetmask("198.51.108.0/24", 60, "test netmask login whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-        r = self.addBLEntryNetmask("198.51.109.0/24", 60, "test netmask login whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
+        # The HTTP API does not support prefix tuple entries because the built-in
+        # allow path has no request-time prefix parameter to check them with.
         r = self.addWLEntryNetmaskLogin("198.51.108.0/24", "netmask-login-wl", 60, "test netmask login whitelist")
         j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
-        r = self.allowFunc('netmask-login-wl', '198.51.108.99', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], 0)
-        self.assertEqual(j['r_attrs']['whitelisted'], '1')
+        self.assertEqual(j['status'], 'failure')
+        self.assertIn('netmask is mutually exclusive with login and ja3', j['reason'])
         r.close()
-
-        r = self.allowFunc('netmask-login-other-wl', '198.51.108.99', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], -1)
-        self.assertEqual(j['r_attrs']['blacklisted'], '1')
-        r.close()
-
-        r = self.allowFunc('netmask-login-wl', '198.51.109.99', "1234")
-        j = r.json()
-        self.assertEqual(j['status'], -1)
-        self.assertEqual(j['r_attrs']['blacklisted'], '1')
-        r.close()
-
-        r = self.delWLEntryNetmaskLogin("198.51.108.0/24", "netmask-login-wl")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
 
     @with_prefix_config_server
     def test_IPJA3WhitelistDefaultPrefix(self):
@@ -349,41 +321,12 @@ class TestWhitelist(ApiTestCase):
         self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPJA3", different_prefix_attrs).close()
 
     def test_NetmaskJA3Whitelist(self):
-        # The HTTP addWLEntry parser should use an explicit netmask with JA3
-        # as an IP/JA3 prefix entry. If it were JA3-only, the same JA3 in the
-        # different blacklisted prefix would be incorrectly allowed.
-        r = self.addBLEntryNetmask("198.51.110.0/24", 60, "test netmask ja3 whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-        r = self.addBLEntryNetmask("198.51.111.0/24", 60, "test netmask ja3 whitelist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
+        # Explicit prefix IP/JA3 entries are available from Lua, not the REST API.
         r = self.addWLEntryNetmaskJA3("198.51.110.0/24", "netmask-ja3-wl", 60, "test netmask ja3 whitelist")
         j = r.json()
-        self.assertEqual(j['status'], 'ok')
-
-        r = self.allowFuncAttrs('netmask-ja3-user-wl', '198.51.110.99', "1234", {"ja3":"netmask-ja3-wl"})
-        j = r.json()
-        self.assertEqual(j['status'], 0)
-        self.assertEqual(j['r_attrs']['whitelisted'], '1')
+        self.assertEqual(j['status'], 'failure')
+        self.assertIn('netmask is mutually exclusive with login and ja3', j['reason'])
         r.close()
-
-        r = self.allowFuncAttrs('netmask-ja3-user-wl', '198.51.110.99', "1234", {"ja3":"netmask-ja3-other-wl"})
-        j = r.json()
-        self.assertEqual(j['status'], -1)
-        self.assertEqual(j['r_attrs']['blacklisted'], '1')
-        r.close()
-
-        r = self.allowFuncAttrs('netmask-ja3-user-wl', '198.51.111.99', "1234", {"ja3":"netmask-ja3-wl"})
-        j = r.json()
-        self.assertEqual(j['status'], -1)
-        self.assertEqual(j['r_attrs']['blacklisted'], '1')
-        r.close()
-
-        r = self.delWLEntryNetmaskJA3("198.51.110.0/24", "netmask-ja3-wl")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
 
     def test_ExplicitPrefixWhitelistFunctions(self):
         # Explicit-prefix whitelist Lua functions should honor the supplied
