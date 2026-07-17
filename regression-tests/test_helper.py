@@ -504,6 +504,27 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addBLEntryJA3Persist(self, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryIPJA3Persist(self, ip, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['ja3'] = ja3
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryIPPersistTLS(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip

@@ -1005,6 +1005,14 @@ bool BlackWhiteListDB::loadPersistEntries()
                         _addEntry(blwl_key, blwl_seconds, ip_login_list, blwl_reason);
                         ++num_entries;
                         break;
+                      case JA3_BLWL:
+                        _addEntry(blwl_key, blwl_seconds, ja3_list, blwl_reason);
+                        ++num_entries;
+                        break;
+                      case IP_JA3_BLWL:
+                        _addEntry(blwl_key, blwl_seconds, ip_ja3_list, blwl_reason);
+                        ++num_entries;
+                        break;
                       default:
                         errlog("loadPersistEntries: Error in blackwhitelist name retrieved from key: %s", blwl_name);
                         retval = false;

@@ -247,6 +247,9 @@ class TestBlacklist(ApiTestCase):
 
     def test_PersistBlacklist(self):
         cmd3 = ("../wforce/wforce -D -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
+        persistent_ja3 = "persist-ja3-blacklist"
+        persistent_ipja3_ip = "198.51.120.14"
+        persistent_ipja3 = "persist-ipja3-blacklist"
         with running_process(cmd3, close_fds=True):
             time.sleep(1)
 
@@ -255,13 +258,22 @@ class TestBlacklist(ApiTestCase):
                 r = self.addBLEntryIPPersist(random_ip, 10, "test blacklist")
                 j = r.json()
                 self.assertEqual(j['status'], 'ok')
+            r = self.addBLEntryJA3Persist(persistent_ja3, 10, "test persistent ja3 blacklist")
+            j = r.json()
+            self.assertEqual(j['status'], 'ok')
+            r = self.addBLEntryIPJA3Persist(persistent_ipja3_ip, persistent_ipja3, 10, "test persistent ipja3 blacklist")
+            j = r.json()
+            self.assertEqual(j['status'], 'ok')
 
         with running_process(cmd3, close_fds=True):
             time.sleep(1)
 
             r = self.getBLFuncPersist()
             j = r.json()
-            self.assertEqual(len(j['bl_entries']), 2000)
+            self.assertEqual(len(j['bl_entries']), 2002)
+            entries = {(entry['type'], entry['key']) for entry in j['bl_entries']}
+            self.assertIn(('ja3', persistent_ja3), entries)
+            self.assertIn(('ipja3', persistent_ipja3_ip + "/32:" + persistent_ipja3), entries)
 
     def test_JA3Blacklist(self):
         r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"03456"})
