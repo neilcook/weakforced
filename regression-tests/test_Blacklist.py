@@ -61,6 +61,38 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
+    def test_IPBlacklistDefaultPrefix(self):
+        # With wforce6's /24 IPv4 and /64 IPv6 blacklist prefixes, IP-only
+        # blacklist entries should match other addresses in the configured
+        # prefix but not addresses outside that prefix.
+        r = self.addBLEntryIPPrefixConfig("192.0.2.14", 60, "test prefix blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncPrefixConfig('prefixblip', '192.0.2.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFuncPrefixConfig('prefixblip', '192.0.3.14', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.addBLEntryIPPrefixConfig("2001:db8:1234:5678::1", 60, "test prefix blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncPrefixConfig('prefixblipv6', '2001:db8:1234:5678::abcd', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFuncPrefixConfig('prefixblipv6', '2001:db8:1234:5679::1', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
         r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist")
         j = r.json()
         self.assertEqual(j['status'], 'ok')
@@ -132,6 +164,40 @@ class TestBlacklist(ApiTestCase):
         j = r.json()
         self.assertEqual(j['status'], 0)
         r.close()
+
+    def test_IPLoginBlacklistDefaultPrefix(self):
+        # Non-explicit blacklistIPLogin() should build its key using the
+        # configured default IP prefix, while still requiring the login to
+        # match exactly.
+        attrs = {
+            "ip": "192.0.4.14",
+            "same_prefix_ip": "192.0.4.99",
+            "different_prefix_ip": "192.0.5.14",
+            "login": "prefixbl-login",
+            "other_login": "prefixbl-other-login"
+        }
+        r = self.customFuncPrefixConfigWithName("AddPrefixBlacklistIPLogin", attrs)
+        j = r.json()
+        self.assertEqual(j['r_attrs']['status'], 'ok')
+
+        r = self.allowFuncPrefixConfig('prefixbl-login', '192.0.4.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFuncPrefixConfig('prefixbl-other-login', '192.0.4.99', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFuncPrefixConfig('prefixbl-login', '192.0.5.14', "1234")
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPLogin", attrs)
+        j = r.json()
+        self.assertEqual(j['r_attrs']['status'], 'ok')
 
         r = self.allowFunc('goodie', '192.168.72.15', "1234")
         j = r.json()
@@ -227,6 +293,59 @@ class TestBlacklist(ApiTestCase):
         j = r.json()
         self.assertEqual(j['status'], 0)
         r.close()
+
+    def test_IPJA3BlacklistDefaultPrefix(self):
+        # Non-explicit blacklistIPJA3() should build its key using the
+        # configured default IP prefix, while still requiring the JA3 value to
+        # match exactly.
+        attrs = {
+            "ip": "192.0.6.14",
+            "same_prefix_ip": "192.0.6.99",
+            "different_prefix_ip": "192.0.7.14",
+            "ja3": "prefixbl-ja3",
+            "other_ja3": "prefixbl-other-ja3"
+        }
+        r = self.customFuncPrefixConfigWithName("AddPrefixBlacklistIPJA3", attrs)
+        j = r.json()
+        self.assertEqual(j['r_attrs']['status'], 'ok')
+
+        r = self.allowFuncPrefixConfigAttrs('prefixbl-ja3-user', '192.0.6.99', "1234", {"ja3":"prefixbl-ja3"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFuncPrefixConfigAttrs('prefixbl-ja3-user', '192.0.6.99', "1234", {"ja3":"prefixbl-other-ja3"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFuncPrefixConfigAttrs('prefixbl-ja3-user', '192.0.7.14', "1234", {"ja3":"prefixbl-ja3"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.customFuncPrefixConfigWithName("DelPrefixBlacklistIPJA3", attrs)
+        j = r.json()
+        self.assertEqual(j['r_attrs']['status'], 'ok')
+
+    def test_ExplicitPrefixBlacklistFunctions(self):
+        # Explicit-prefix blacklist Lua functions should honor the supplied
+        # prefix even though the main regression instance keeps exact-IP
+        # defaults.
+        attrs = {
+            "ip": "198.51.100.14",
+            "same_prefix_ip": "198.51.100.99",
+            "different_prefix_ip": "198.51.101.14",
+            "login": "explicitbl-login",
+            "ja3": "explicitbl-ja3",
+            "prefix": "24"
+        }
+        r = self.customFuncWithName("ExplicitPrefixBlacklist", attrs)
+        j = r.json()
+        self.assertEqual(j['r_attrs']['login_same_prefix'], 'true')
+        self.assertEqual(j['r_attrs']['login_different_prefix'], 'false')
+        self.assertEqual(j['r_attrs']['ja3_same_prefix'], 'true')
+        self.assertEqual(j['r_attrs']['ja3_different_prefix'], 'false')
 
         r = self.allowFuncAttrs('ja3goodie', '192.168.41.14', "1234", {"ja3":"111111"})
         j = r.json()

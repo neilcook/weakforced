@@ -77,6 +77,8 @@ class ApiTestCase(unittest.TestCase):
         self.server4_url = 'http://%s:%s/' % (self.server_address, self.server4_port)
         self.server5_port = 8088
         self.server5_url = 'http://%s:%s/' % (self.server_address, self.server5_port)
+        self.server6_port = 8089
+        self.server6_url = 'http://%s:%s/' % (self.server_address, self.server6_port)
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
@@ -133,6 +135,23 @@ class ApiTestCase(unittest.TestCase):
 
     def allowFuncAttrsReplica2(self, login, remote, pwhash, attrs):
         return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True, True)
+
+    def allowFuncPrefixConfig(self, login, remote, pwhash):
+        return self.allowFuncPrefixConfigAttrs(login, remote, pwhash, {})
+
+    def allowFuncPrefixConfigAttrs(self, login, remote, pwhash, attrs):
+        payload = dict()
+        payload['login'] = login
+        payload['remote'] = remote
+        payload['pwhash'] = pwhash
+        payload['attrs'] = attrs
+        payload['device_id'] = ""
+        payload['protocol'] = ""
+        payload['tls'] = False
+        return self.session.post(
+            self.url6("/?command=allow"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
 
     def allowFuncDeviceProtocol(self, login, remote, pwhash, device_id, protocol):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, device_id, protocol, False)
@@ -356,6 +375,14 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def customFuncPrefixConfigWithName(self, custom_func_name, attrs):
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url6("/?command=" + custom_func_name),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def trackalertCustomFunc(self, login):
         attrs = dict()
         attrs['login'] = login
@@ -449,6 +476,16 @@ class ApiTestCase(unittest.TestCase):
         payload['reason'] = reason
         return self.session.post(
             self.url5("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryIPPrefixConfig(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url6("/?command=addBLEntry"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
@@ -565,6 +602,16 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addWLEntryIPPrefixConfig(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url6("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addWLEntryLogin(self, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -660,6 +707,9 @@ class ApiTestCase(unittest.TestCase):
 
     def url5(self, relative_url):
         return urljoin(self.server5_url, relative_url)
+
+    def url6(self, relative_url):
+        return urljoin(self.server6_url, relative_url)
 
     def ta_url(self, relative_url):
         return urljoin(self.ta_server_url, relative_url)

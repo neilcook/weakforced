@@ -230,7 +230,7 @@ private:
   std::string ipja3_ret_msg;
   std::string ja3_ret_msg;
   std::atomic<std::uint8_t> v4_prefix{32};
-  std::atomic<std::uint8_t> v6_prefix{64};
+  std::atomic<std::uint8_t> v6_prefix{128};
 
   std::vector<BlackWhiteListEntry> getEntries(const blackwhitelist_t& list) const;
   void _addEntry(const std::string& key, time_t seconds, blackwhitelist_t& blackwhitelist, const std::string& reason);
