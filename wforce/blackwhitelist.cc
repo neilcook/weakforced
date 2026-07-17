@@ -47,9 +47,22 @@ using namespace json11;
 BlackWhiteListDB g_bl_db(BLWLDBType::BLACKLIST);
 BlackWhiteListDB g_wl_db(BLWLDBType::WHITELIST);
 
+std::uint8_t BlackWhiteListDB::getDefaultPrefix(const ComboAddress& ca) const
+{
+  if (ca.isIpv4()) {
+    return v4_prefix.load();
+  }
+  return v6_prefix.load();
+}
+
+std::string BlackWhiteListDB::ipString(const ComboAddress& ca) const
+{
+  return Netmask(ca, getDefaultPrefix(ca)).toStringNetwork();
+}
+
 std::string BlackWhiteListDB::ipStringStr(const ComboAddress& ca, const std::string& str) const
 {
-  return ca.toString() + ":" + str;
+  return ipString(ca) + ":" + str;
 }
 
 std::string BlackWhiteListDB::ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const
@@ -67,7 +80,7 @@ void BlackWhiteListDB::addEntry(const Netmask& nm, time_t seconds, const std::st
 
 void BlackWhiteListDB::addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason)
 {
-  std::string key = Netmask(ca).toStringNetwork();
+  std::string key = ipString(ca);
 
   addEntryInternal(key, seconds, IP_BLWL, reason, true);
   addEntryLog(IP_BLWL, key, seconds, reason);
@@ -317,7 +330,7 @@ void BlackWhiteListDB::deleteEntry(const Netmask& nm)
 
 void BlackWhiteListDB::deleteEntry(const ComboAddress& ca)
 {
-  std::string key = Netmask(ca).toStringNetwork();
+  std::string key = ipString(ca);
 
   deleteEntryInternal(key, IP_BLWL, true);
 }
@@ -670,6 +683,16 @@ void BlackWhiteListDB::setRWTimeout(int timeout_secs, int timeout_usecs)
 {
   redis_rw_timeout_usecs = timeout_usecs; // atomic
   redis_rw_timeout_secs = timeout_secs; // atomic
+}
+
+void BlackWhiteListDB::setv4Prefix(std::uint8_t bits)
+{
+  v4_prefix = bits > 32 ? 32 : bits;
+}
+
+void BlackWhiteListDB::setv6Prefix(std::uint8_t bits)
+{
+  v6_prefix = bits > 128 ? 128 : bits;
 }
 
 void BlackWhiteListDB::setRedisTLS(bool enable)

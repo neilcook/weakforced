@@ -153,6 +153,10 @@ public:
 
   void setConnectTimeout(int timeout);
   void setRWTimeout(int timeout_secs, int timeout_usecs);
+  void setv4Prefix(std::uint8_t bits);
+  void setv6Prefix(std::uint8_t bits);
+  std::uint8_t getv4Prefix() const { return v4_prefix.load(); }
+  std::uint8_t getv6Prefix() const { return v6_prefix.load(); }
 
   const std::string& getIPRetMsg() const { return ip_ret_msg;}
   const std::string& getLoginRetMsg() const { return login_ret_msg; }
@@ -225,6 +229,8 @@ private:
   std::string iplogin_ret_msg;
   std::string ipja3_ret_msg;
   std::string ja3_ret_msg;
+  std::atomic<std::uint8_t> v4_prefix{32};
+  std::atomic<std::uint8_t> v6_prefix{64};
 
   std::vector<BlackWhiteListEntry> getEntries(const blackwhitelist_t& list) const;
   void _addEntry(const std::string& key, time_t seconds, blackwhitelist_t& blackwhitelist, const std::string& reason);
@@ -236,6 +242,8 @@ private:
   void addEntryLog(BLWLType blt, const std::string& key, time_t seconds, const std::string& reason) const;
   void deleteEntryLog(BLWLType blt, const std::string& key) const;
   void expireEntryLog(BLWLType blt, const std::string& key) const;
+  std::uint8_t getDefaultPrefix(const ComboAddress& ca) const;
+  std::string ipString(const ComboAddress& ca) const;
   std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
   std::string ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const;
   bool checkSetupContext();
