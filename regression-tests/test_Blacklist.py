@@ -1,11 +1,11 @@
 import requests
 import socket
-import subprocess
 import sys
 import time
 import json
 from mimesis import Internet 
 from test_helper import ApiTestCase
+from test_helper import running_process
 
 class TestBlacklist(ApiTestCase):
 
@@ -147,30 +147,21 @@ class TestBlacklist(ApiTestCase):
 
     def test_PersistBlacklist(self):
         cmd3 = ("../wforce/wforce -D -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
-        proc3 = subprocess.Popen(cmd3, close_fds=True)
-        time.sleep(1)
-        
-        for i in range(2000):
-            random_ip = Internet().ip_v4()
-            r = self.addBLEntryIPPersist(random_ip, 10, "test blacklist")
+        with running_process(cmd3, close_fds=True):
+            time.sleep(1)
+
+            for i in range(2000):
+                random_ip = Internet().ip_v4()
+                r = self.addBLEntryIPPersist(random_ip, 10, "test blacklist")
+                j = r.json()
+                self.assertEqual(j['status'], 'ok')
+
+        with running_process(cmd3, close_fds=True):
+            time.sleep(1)
+
+            r = self.getBLFuncPersist()
             j = r.json()
-            self.assertEqual(j['status'], 'ok')
-
-        print("Killing process")
-        proc3.terminate()
-        print("Waiting for process")
-        proc3.wait()
-
-        proc3 = subprocess.Popen(cmd3, close_fds=True)
-
-        time.sleep(1)
-        
-        r = self.getBLFuncPersist()
-        j = r.json()
-        self.assertEqual(len(j['bl_entries']), 2000)
-
-        proc3.terminate()
-        proc3.wait()
+            self.assertEqual(len(j['bl_entries']), 2000)
 
     def test_JA3Blacklist(self):
         r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"03456"})

@@ -72,6 +72,13 @@ newStringStatsDB("OneHourDB",600,6,field_map)
 -- Do not set when there is a central redis DB used by all wforce servers
 -- blacklistPersistReplicated()
 
+-- Enable TLS for connections to the redis DB (requires wforce built with hiredis_ssl)
+-- blacklistRedisTLS(true)
+-- blacklistRedisTLSCA("/etc/ssl/certs/redis-ca.pem")
+-- blacklistRedisTLSClientCert("/etc/wforce/redis-client.pem", "/etc/wforce/redis-client.key")
+-- blacklistRedisTLSVerifyPeer(true)
+-- blacklistRedisTLSServerName("redis.example.com")
+
 -- This one is 24 windows of 1 hour each, so 24 hours in total. Useful for tracking long-term stats.
 -- You can reuse field_map or create a different one
 newStringStatsDB("24HourDB",3600, 24, field_map)

@@ -1,6 +1,10 @@
 from datetime import datetime
+from contextlib import contextmanager
 import os
 import requests
+import socket
+import subprocess
+import time
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 import unittest
@@ -8,6 +12,43 @@ import json
 from subprocess import call, check_output
 
 DAEMON = os.environ.get('DAEMON', 'authoritative')
+
+
+def wait_for_port(port, timeout_secs=10, host='127.0.0.1'):
+    for _ in range(timeout_secs * 2):
+        try:
+            with socket.create_connection((host, port), timeout=1):
+                return True
+        except OSError:
+            time.sleep(0.5)
+    return False
+
+
+def terminate_process(proc):
+    if proc.poll() is None:
+        proc.terminate()
+    proc.wait()
+
+
+def start_process(cmd, **popen_kwargs):
+    return subprocess.Popen(cmd, **popen_kwargs)
+
+
+@contextmanager
+def running_process(cmd, **popen_kwargs):
+    proc = start_process(cmd, **popen_kwargs)
+    try:
+        yield proc
+    finally:
+        terminate_process(proc)
+
+
+@contextmanager
+def running_process_on_port(cmd, port, startup_timeout_secs=10, **popen_kwargs):
+    with running_process(cmd, **popen_kwargs) as proc:
+        if not wait_for_port(port, startup_timeout_secs):
+            raise RuntimeError("process did not start on port %d" % port)
+        yield proc
 
 
 class ApiTestCase(unittest.TestCase):
@@ -34,6 +75,8 @@ class ApiTestCase(unittest.TestCase):
         self.server3_url = 'http://%s:%s/' % (self.server_address, self.server3_port)
         self.server4_port = 8087
         self.server4_url = 'http://%s:%s/' % (self.server_address, self.server4_port)
+        self.server5_port = 8088
+        self.server5_url = 'http://%s:%s/' % (self.server_address, self.server5_port)
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
@@ -344,6 +387,9 @@ class ApiTestCase(unittest.TestCase):
     def getWLFuncPersist(self):
         return self.session.get(self.url3("/?command=getWL"))
 
+    def getBLFuncPersistTLS(self):
+        return self.session.get(self.url5("/?command=getBL"))
+
     def addBLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -393,6 +439,24 @@ class ApiTestCase(unittest.TestCase):
         payload['reason'] = reason
         return self.session.post(
             self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryIPPersistTLS(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url5("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delBLEntryIPPersistTLS(self, ip):
+        payload = dict()
+        payload['ip'] = ip
+        return self.session.post(
+            self.url5("/?command=delBLEntry"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
@@ -593,6 +657,9 @@ class ApiTestCase(unittest.TestCase):
 
     def url4(self, relative_url):
         return urljoin(self.server4_url, relative_url)
+
+    def url5(self, relative_url):
+        return urljoin(self.server5_url, relative_url)
 
     def ta_url(self, relative_url):
         return urljoin(self.ta_server_url, relative_url)

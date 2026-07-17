@@ -1,13 +1,13 @@
 import requests
 import time
 import os
-import subprocess
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 
 from prometheus_client.parser import text_string_to_metric_families
 from prometheus_client.samples import Sample
 from test_helper import ApiTestCase
+from test_helper import running_process
 
 PROMETHEUS_PORT="9090"
 PROMETHEUS_URL="http://localhost:%s" % PROMETHEUS_PORT
@@ -89,9 +89,8 @@ class TestPrometheus(ApiTestCase):
 
     def test_RealPrometheus(self):
         cmd = ["prometheus", "--config.file=%s" % PROMETHEUS_CONF]
-        prometheus = subprocess.Popen(cmd, close_fds=True)
         prometheus_tries = 20
-        try:
+        with running_process(cmd, close_fds=True):
             for i in range(prometheus_tries+1):
                 try:
                     r = requests.get('%s/api/v1/label/__name__/values' %
@@ -102,6 +101,3 @@ class TestPrometheus(ApiTestCase):
                     if i == prometheus_tries:
                         raise
                     time.sleep(4)
-        finally:
-            prometheus.terminate()
-            prometheus.wait()

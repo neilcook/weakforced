@@ -1,6 +1,7 @@
 import subprocess
 import time
 from test_helper import ApiTestCase
+from test_helper import running_process
 
 ERROR = 3
 WARNING = 4
@@ -13,12 +14,8 @@ class TestBasics(ApiTestCase):
     def check_loglevel(self, loglevel, content):
         cmd = ('../wforce/wforce -v -D -C ./wforce3.conf -R '
                '../wforce/regexes.yaml --loglevel %d' % loglevel).split()
-        try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        with running_process(cmd, stdout=subprocess.PIPE) as proc:
             self.generate_log_entries()
-        finally:
-            proc.terminate()
-            proc.wait()
         out, err = proc.communicate()
         if out:
             out = out.decode()
