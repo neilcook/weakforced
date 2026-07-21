@@ -423,6 +423,20 @@ cannot be called inside the allow/report/reset functions:
 
         blacklistPersistRWTimeout(0, 50000)
 
+* setBlacklistV4Prefix(<prefix>) - Set the IPv4 prefix length used by
+  blacklist functions that take an IP address but no explicit prefix,
+  including `blacklistIP`, `blacklistIPLogin`, and `blacklistIPJA3`.
+  The default is 32, preserving exact IPv4 address matching. For example:
+
+        setBlacklistV4Prefix(24)
+
+* setBlacklistV6Prefix(<prefix>) - Set the IPv6 prefix length used by
+  blacklist functions that take an IP address but no explicit prefix,
+  including `blacklistIP`, `blacklistIPLogin`, and `blacklistIPJA3`.
+  The default is 128, preserving exact IPv6 address matching. For example:
+
+        setBlacklistV6Prefix(64)
+
 * disableBuiltinWhitelists() - Disable the built-in whitelisting checks,
   enabling them to be checked from Lua instead. For example:
 
@@ -502,6 +516,20 @@ cannot be called inside the allow/report/reset functions:
   timeout for reading from/writing to the Redis DB. For example:
 
         whitelistPersistRWTimeout(0, 50000)
+
+* setWhitelistV4Prefix(<prefix>) - Set the IPv4 prefix length used by
+  whitelist functions that take an IP address but no explicit prefix,
+  including `whitelistIP`, `whitelistIPLogin`, and `whitelistIPJA3`.
+  The default is 32, preserving exact IPv4 address matching. For example:
+
+        setWhitelistV4Prefix(24)
+
+* setWhitelistV6Prefix(<prefix>) - Set the IPv6 prefix length used by
+  whitelist functions that take an IP address but no explicit prefix,
+  including `whitelistIP`, `whitelistIPLogin`, and `whitelistIPJA3`.
+  The default is 128, preserving exact IPv6 address matching. For example:
+
+        setWhitelistV6Prefix(64)
 
 * setBlacklistIPRetMsg(<msg>) - Set the message to be returned to
   clients whose IP address is blacklisted. The strings "{ip}" and
@@ -1004,7 +1032,9 @@ a Netmask. For example:
 
 * blacklistIP(\<ip\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified IP for expiry seconds, with the specified reason. IP
-  address must be a ComboAddress. For example:
+  address must be a ComboAddress. The IP is stored using the configured
+  blacklist IPv4 or IPv6 prefix, which defaults to exact address matching
+  (/32 for IPv4 and /128 for IPv6). For example:
   
 		blacklistIP(lt.remote, 300, "Attempted password brute forcing")
 
@@ -1018,9 +1048,17 @@ a Netmask. For example:
   Blacklist the specified IP-Login tuple for expiry seconds, with the
   specified reason. Only when that IP and login are received in the
   same login tuple will the request be blacklisted. IP address must be
-  a ComboAddress. For example:
+  a ComboAddress. The IP is stored using the configured blacklist IPv4
+  or IPv6 prefix. For example:
   
 		blacklistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
+
+* blacklistIPPrefixLogin(\<ip\>, \<login\>, \<prefix\>, \<expiry\>, \<reason string\>) -
+  Blacklist the specified IP/Login tuple using the supplied IP prefix
+  length instead of the configured default prefix. IP address must be a
+  ComboAddress. For example:
+
+		blacklistIPPrefixLogin(lt.remote, lt.login, 24, 300, "Account and IP prefix are suspicious")
 
 * blacklistJA3(\<ja3\>, \<expiry\> \<reason string\>) - Blacklist the
   specified JA3 hash for expiry seconds, with the specified
@@ -1032,9 +1070,17 @@ a Netmask. For example:
   Blacklist the specified IP-JA3 tuple for expiry seconds, with the
   specified reason. Only when that IP and JA3 hash are received in the
   same login tuple will the request be blacklisted. IP address must be
-  a ComboAddress. For example:
+  a ComboAddress. The IP is stored using the configured blacklist IPv4
+  or IPv6 prefix. For example:
 
-  	blacklistIPLogin(lt.remote, lt.attrs.ja3, 300, "Account and IP are suspicious")
+        blacklistIPJA3(lt.remote, lt.attrs.ja3, 300, "Client and IP are suspicious")
+
+* blacklistIPPrefixJA3(\<ip\>, \<ja3\>, \<prefix\>, \<expiry\>, \<reason string\>) -
+  Blacklist the specified IP/JA3 tuple using the supplied IP prefix
+  length instead of the configured default prefix. IP address must be a
+  ComboAddress. For example:
+
+        blacklistIPPrefixJA3(lt.remote, lt.attrs.ja3, 24, 300, "Client and IP prefix are suspicious")
 
 * unblacklistNetmask(\<Netmask\>) Remove the blacklist for the
   specified netmask. Netmask address must be a Netmask object,
@@ -1043,7 +1089,8 @@ a Netmask. For example:
 		unblacklistNetmask(newNetmask("12.32.0.0/16"))
 
 * unblacklistIP(\<ip\>) - Remove the blacklist for the specified
-  IP. IP address must be a ComboAddress. For example:
+  IP. IP address must be a ComboAddress. The IP is interpreted using
+  the configured blacklist IPv4 or IPv6 prefix. For example:
   
 		unblacklistIP(lt.remote)
 
@@ -1053,9 +1100,16 @@ a Netmask. For example:
 		unblacklistLogin(lt.login)
 
 * unblacklistIPLogin(\<ip\>, \<login\>) - Remove the blacklist for the specified
-  IP-Login tuple. IP address must be a ComboAddress. For example:
+  IP-Login tuple. IP address must be a ComboAddress. The IP is interpreted
+  using the configured blacklist IPv4 or IPv6 prefix. For example:
   
 		unblacklistIPLogin(lt.remote, lt.login)
+
+* unblacklistIPPrefixLogin(\<ip\>, \<login\>, \<prefix\>) - Remove the blacklist
+  for the specified IP/Login tuple using the supplied IP prefix length.
+  IP address must be a ComboAddress. For example:
+
+		unblacklistIPPrefixLogin(lt.remote, lt.login, 24)
 
 * unblacklistJA3(\<ja3\>) - Remove the blacklist for the specified
   JA3 hash. For example:
@@ -1063,9 +1117,16 @@ a Netmask. For example:
   	unblacklistJA3(lt.attrs.ja3)
 
 * unblacklistIPJA3(\<ip\>, \<ja3\>) - Remove the blacklist for the specified
-  IP-JA3 tuple. IP address must be a ComboAddress. For example:
+  IP-JA3 tuple. IP address must be a ComboAddress. The IP is interpreted
+  using the configured blacklist IPv4 or IPv6 prefix. For example:
 
   	unblacklistIPJA3(lt.remote, lt.attrs.ja3)
+
+* unblacklistIPPrefixJA3(\<ip\>, \<ja3\>, \<prefix\>) - Remove the blacklist
+  for the specified IP/JA3 tuple using the supplied IP prefix length.
+  IP address must be a ComboAddress. For example:
+
+        unblacklistIPPrefixJA3(lt.remote, lt.attrs.ja3, 24)
 
 * checkBlacklistIP(\<ip\>) - Check if an IP is blacklisted. Return
   true if the IP is blacklisted. IP must be a ComboAddress. For example:
@@ -1083,6 +1144,12 @@ a Netmask. For example:
 
         checkBlacklistIPLogin(lt.remote, lt.login)
 
+* checkBlacklistIPPrefixLogin(\<ip\>, \<login\>, \<prefix\>) - Check if an
+  IP/login tuple is blacklisted using the supplied IP prefix length.
+  Return true if the tuple is blacklisted. For example:
+
+        checkBlacklistIPPrefixLogin(lt.remote, lt.login, 24)
+
 * checkBlacklistJA3(\<ja3\>) - Check if a JA3 hash is
   blacklisted. Return true if the JA3 hash is blacklisted. For example:
 
@@ -1093,6 +1160,12 @@ a Netmask. For example:
   example:
 
         checkBlacklistIPJA3(lt.remote, ja3_attr)
+
+* checkBlacklistIPPrefixJA3(\<ip\>, \<ja3\>, \<prefix\>) - Check if an
+  IP/JA3 tuple is blacklisted using the supplied IP prefix length.
+  Return true if the tuple is blacklisted. For example:
+
+        checkBlacklistIPPrefixJA3(lt.remote, ja3_attr, 24)
 
 * getIPBlacklist() - Gets the current IP blacklist as an array. Each item in the array is a table containing
   three keys: `expiration`, `reason` and `ip`. For example, the following is an example table returned:
@@ -1114,7 +1187,7 @@ a Netmask. For example:
 
         { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", ip_login="1.2.3.4:admin"} }
 
-* getIPJA3Blacklist() - Gets the current IP/Login blacklist as an array. Each item in the array is a table containing
+* getIPJA3Blacklist() - Gets the current IP/JA3 blacklist as an array. Each item in the array is a table containing
   three keys: `expiration`, `reason` and `ip_ja3`. For example, the following is an example table returned:
 
         { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", ip_ja3="1.2.3.4:8d172671cc8e3c9808e277df5fbf69ba"} }
@@ -1127,7 +1200,9 @@ a Netmask. For example:
 
 * whitelistIP(\<ip\>, \<expiry\>, \<reason string\>) - Whitelist the
   specified IP for expiry seconds, with the specified reason. IP
-  address must be a ComboAddress. For example:
+  address must be a ComboAddress. The IP is stored using the configured
+  whitelist IPv4 or IPv6 prefix, which defaults to exact address matching
+  (/32 for IPv4 and /128 for IPv6). For example:
   
 		whitelistIP(lt.remote, 300, "Known good IP")
 
@@ -1141,9 +1216,17 @@ a Netmask. For example:
   Whitelist the specified IP-Login tuple for expiry seconds, with the
   specified reason. Only when that IP and login are received in the
   same login tuple will the request be whitelisted. IP address must be
-  a ComboAddress. For example:
+  a ComboAddress. The IP is stored using the configured whitelist IPv4
+  or IPv6 prefix. For example:
   
 		whitelistIPLogin(lt.remote, lt.login, 300, "Known good IP and login")
+
+* whitelistIPPrefixLogin(\<ip\>, \<login\>, \<prefix\>, \<expiry\>, \<reason string\>) -
+  Whitelist the specified IP/Login tuple using the supplied IP prefix
+  length instead of the configured default prefix. IP address must be a
+  ComboAddress. For example:
+
+		whitelistIPPrefixLogin(lt.remote, lt.login, 24, 300, "Known good IP prefix and login")
 
 * whitelistJA3(\<ja3\>, \<expiry\> \<reason string\>) - Whitelist the
   specified JA3 hash for expiry seconds, with the specified
@@ -1155,9 +1238,17 @@ a Netmask. For example:
   Whitelist the specified IP-JA3 tuple for expiry seconds, with the
   specified reason. Only when that IP and JA3 hash are received in the
   same login tuple will the request be whitelisted. IP address must be
-  a ComboAddress. For example:
+  a ComboAddress. The IP is stored using the configured whitelist IPv4
+  or IPv6 prefix. For example:
 
-  	whitelistIPLogin(lt.remote, lt.attrs.ja3, 300, "JA3 and IP are well-known")
+        whitelistIPJA3(lt.remote, lt.attrs.ja3, 300, "JA3 and IP are well-known")
+
+* whitelistIPPrefixJA3(\<ip\>, \<ja3\>, \<prefix\>, \<expiry\>, \<reason string\>) -
+  Whitelist the specified IP/JA3 tuple using the supplied IP prefix
+  length instead of the configured default prefix. IP address must be a
+  ComboAddress. For example:
+
+        whitelistIPPrefixJA3(lt.remote, lt.attrs.ja3, 24, 300, "JA3 and IP prefix are well-known")
 
 * unwhitelistNetmask(\<Netmask\>) Remove the whitelist for the
   specified netmask. Netmask address must be a Netmask object,
@@ -1166,7 +1257,8 @@ a Netmask. For example:
 		unwhitelistNetmask(newNetmask("12.32.0.0/16"))
 
 * unwhitelistIP(\<ip\>) - Remove the whitelist for the specified
-  IP. IP address must be a ComboAddress. For example:
+  IP. IP address must be a ComboAddress. The IP is interpreted using
+  the configured whitelist IPv4 or IPv6 prefix. For example:
   
 		unwhitelistIP(lt.remote)
 
@@ -1176,9 +1268,16 @@ a Netmask. For example:
 		unwhitelistLogin(lt.login)
 
 * unwhitelistIPLogin(\<ip\>, \<login\>) - Remove the whitelist for the specified
-  IP-Login tuple. IP address must be a ComboAddress. For example:
+  IP-Login tuple. IP address must be a ComboAddress. The IP is interpreted
+  using the configured whitelist IPv4 or IPv6 prefix. For example:
   
 		unwhitelistIPLogin(lt.remote, lt.login)
+
+* unwhitelistIPPrefixLogin(\<ip\>, \<login\>, \<prefix\>) - Remove the whitelist
+  for the specified IP/Login tuple using the supplied IP prefix length.
+  IP address must be a ComboAddress. For example:
+
+		unwhitelistIPPrefixLogin(lt.remote, lt.login, 24)
 
 * unwhitelistJA3(\<ja3\>) - Remove the whitelist for the specified
   JA3 hash. For example:
@@ -1186,9 +1285,16 @@ a Netmask. For example:
   	unwhitelistJA3(lt.attrs.ja3)
 
 * unwhitelistIPJA3(\<ip\>, \<ja3\>) - Remove the whitelist for the specified
-  IP-JA3 tuple. IP address must be a ComboAddress. For example:
+  IP-JA3 tuple. IP address must be a ComboAddress. The IP is interpreted
+  using the configured whitelist IPv4 or IPv6 prefix. For example:
 
-  	unwhitelistIPLogin(lt.remote, lt.attrs.ja3)
+        unwhitelistIPJA3(lt.remote, lt.attrs.ja3)
+
+* unwhitelistIPPrefixJA3(\<ip\>, \<ja3\>, \<prefix\>) - Remove the whitelist
+  for the specified IP/JA3 tuple using the supplied IP prefix length.
+  IP address must be a ComboAddress. For example:
+
+        unwhitelistIPPrefixJA3(lt.remote, lt.attrs.ja3, 24)
 
 * checkWhitelistIP(\<ip\>) - Check if an IP is whitelisted. Return
   true if the IP is whitelisted. IP must be a ComboAddress. For example:
@@ -1206,6 +1312,12 @@ a Netmask. For example:
 
         checkWhitelistIPLogin(lt.remote, lt.login)
 
+* checkWhitelistIPPrefixLogin(\<ip\>, \<login\>, \<prefix\>) - Check if an
+  IP/login tuple is whitelisted using the supplied IP prefix length.
+  Return true if the tuple is whitelisted. For example:
+
+        checkWhitelistIPPrefixLogin(lt.remote, lt.login, 24)
+
 * checkWhitelistJA3(\<ja3\>) - Check if a JA3 hash is
   whitelisted. Return true if the JA3 is whitelisted. For example:
 
@@ -1216,6 +1328,12 @@ a Netmask. For example:
   example:
 
         checkWhitelistIPJA3(lt.remote, lt.attrs.ja3)
+
+* checkWhitelistIPPrefixJA3(\<ip\>, \<ja3\>, \<prefix\>) - Check if an
+  IP/JA3 tuple is whitelisted using the supplied IP prefix length.
+  Return true if the tuple is whitelisted. For example:
+
+        checkWhitelistIPPrefixJA3(lt.remote, lt.attrs.ja3, 24)
 
 * getIPWhitelist() - Gets the current IP whitelist as an array. Each item in the array is a table containing 
   three keys: `expiration`, `reason` and `ip`. For example, the following is an example table returned:
@@ -1237,7 +1355,7 @@ a Netmask. For example:
 
         { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", ip_login="1.2.3.4:admin"} }
 
-* getIPJA3Whitelist() - Gets the current IP/Login whitelist as an array. Each item in the array is a table containing
+* getIPJA3Whitelist() - Gets the current IP/JA3 whitelist as an array. Each item in the array is a table containing
   three keys: `expiration`, `reason` and `ip_ja3`. For example, the following is an example table returned:
 
         { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", ip_ja3="1.2.3.4:8d172671cc8e3c9808e277df5fbf69ba"} }

@@ -761,7 +761,6 @@ components:
         ja3:
           type: string
       example:
-        ip: 127.0.0.1
         netmask: 2001:503:ba3e/64
     AddBLWLEntryParams:
       type: object
@@ -779,7 +778,6 @@ components:
         reason:
           type: string
       example:
-        ip: 127.0.0.1
         netmask: 2001:503:ba3e::/64
         expire_secs: 3600
         reason: Is there ever a good reason

@@ -1,5 +1,6 @@
 from datetime import datetime
 from contextlib import contextmanager
+from functools import wraps
 import os
 import requests
 import socket
@@ -51,6 +52,14 @@ def running_process_on_port(cmd, port, startup_timeout_secs=10, **popen_kwargs):
         yield proc
 
 
+def with_prefix_config_server(test_func):
+    @wraps(test_func)
+    def wrapper(self, *args, **kwargs):
+        with self.runningPrefixConfig():
+            return test_func(self, *args, **kwargs)
+    return wrapper
+
+
 class ApiTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -77,6 +86,8 @@ class ApiTestCase(unittest.TestCase):
         self.server4_url = 'http://%s:%s/' % (self.server_address, self.server4_port)
         self.server5_port = 8088
         self.server5_url = 'http://%s:%s/' % (self.server_address, self.server5_port)
+        self.server6_port = 8089
+        self.server6_url = 'http://%s:%s/' % (self.server_address, self.server6_port)
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
@@ -133,6 +144,27 @@ class ApiTestCase(unittest.TestCase):
 
     def allowFuncAttrsReplica2(self, login, remote, pwhash, attrs):
         return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True, True)
+
+    def allowFuncPrefixConfig(self, login, remote, pwhash):
+        return self.allowFuncPrefixConfigAttrs(login, remote, pwhash, {})
+
+    def allowFuncPrefixConfigAttrs(self, login, remote, pwhash, attrs):
+        payload = dict()
+        payload['login'] = login
+        payload['remote'] = remote
+        payload['pwhash'] = pwhash
+        payload['attrs'] = attrs
+        payload['device_id'] = ""
+        payload['protocol'] = ""
+        payload['tls'] = False
+        return self.session.post(
+            self.url6("/?command=allow"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def runningPrefixConfig(self):
+        cmd6 = ("../wforce/wforce -D -C ./wforce6.conf -R ../wforce/regexes.yaml").split()
+        return running_process_on_port(cmd6, self.server6_port, close_fds=True)
 
     def allowFuncDeviceProtocol(self, login, remote, pwhash, device_id, protocol):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, device_id, protocol, False)
@@ -356,6 +388,14 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def customFuncPrefixConfigWithName(self, custom_func_name, attrs):
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url6("/?command=" + custom_func_name),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def trackalertCustomFunc(self, login):
         attrs = dict()
         attrs['login'] = login
@@ -412,6 +452,28 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addBLEntryNetmaskLogin(self, netmask, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryNetmaskJA3(self, netmask, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryIP(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -442,6 +504,27 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addBLEntryJA3Persist(self, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryIPJA3Persist(self, ip, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['ja3'] = ja3
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryIPPersistTLS(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -449,6 +532,16 @@ class ApiTestCase(unittest.TestCase):
         payload['reason'] = reason
         return self.session.post(
             self.url5("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addBLEntryIPPrefixConfig(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url6("/?command=addBLEntry"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
@@ -484,6 +577,24 @@ class ApiTestCase(unittest.TestCase):
         payload = dict()
         payload['login'] = login
         payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delBLEntryNetmaskLogin(self, netmask, login):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delBLEntryNetmaskJA3(self, netmask, ja3):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
         return self.session.post(
             self.url("/?command=delBLEntry"),
             data=json.dumps(payload),
@@ -535,6 +646,28 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addWLEntryNetmaskLogin(self, netmask, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addWLEntryNetmaskJA3(self, netmask, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addWLEntryIP(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -565,6 +698,16 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addWLEntryIPPrefixConfig(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url6("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addWLEntryLogin(self, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -579,6 +722,24 @@ class ApiTestCase(unittest.TestCase):
         payload = dict()
         payload['login'] = login
         payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delWLEntryNetmaskLogin(self, netmask, login):
+        payload = dict()
+        payload['login'] = login
+        payload['netmask'] = netmask
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def delWLEntryNetmaskJA3(self, netmask, ja3):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['netmask'] = netmask
         return self.session.post(
             self.url("/?command=delWLEntry"),
             data=json.dumps(payload),
@@ -660,6 +821,9 @@ class ApiTestCase(unittest.TestCase):
 
     def url5(self, relative_url):
         return urljoin(self.server5_url, relative_url)
+
+    def url6(self, relative_url):
+        return urljoin(self.server6_url, relative_url)
 
     def ta_url(self, relative_url):
         return urljoin(self.ta_server_url, relative_url)

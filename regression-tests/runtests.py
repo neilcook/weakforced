@@ -32,7 +32,7 @@ udpsinkcmd = (".venv/bin/python ./udp_sink.py").split()
 ta_cmd = ("../trackalert/trackalert -D -C ./trackalert.conf").split()
 
 # Now run wforce and the tests.
-print("Launching wforce (1 and 2 and 4)...")
+print("Launching wforce (1, 2 and 4)...")
 print(' '.join(cmd1))
 print(' '.join(cmd2))
 print(' '.join(cmd4))

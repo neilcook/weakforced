@@ -481,6 +481,12 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
       if (haveLogin && haveJA3) {
         throw std::runtime_error("login and ja3 are mutually exclusive parameters");
       }
+      if (haveIP && haveNetmask) {
+        throw std::runtime_error("ip and netmask are mutually exclusive parameters");
+      }
+      if (haveNetmask && (haveLogin || haveJA3)) {
+        throw std::runtime_error("netmask is mutually exclusive with login and ja3 parameters");
+      }
       if (haveLogin && haveIP) {
         if (addCmd) {
           if (blacklist)
@@ -539,16 +545,32 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
       }
       else if (haveIP || haveNetmask) {
         if (addCmd) {
-          if (blacklist)
-            g_bl_db.addEntry(en_nm, bl_seconds, bl_reason);
-          else
-            g_wl_db.addEntry(en_nm, bl_seconds, bl_reason);
+          if (blacklist) {
+            if (haveIP)
+              g_bl_db.addEntry(en_ca, bl_seconds, bl_reason);
+            else
+              g_bl_db.addEntry(en_nm, bl_seconds, bl_reason);
+          }
+          else {
+            if (haveIP)
+              g_wl_db.addEntry(en_ca, bl_seconds, bl_reason);
+            else
+              g_wl_db.addEntry(en_nm, bl_seconds, bl_reason);
+          }
         }
         else {
-          if (blacklist)
-            g_bl_db.deleteEntry(en_nm);
-          else
-            g_wl_db.deleteEntry(en_nm);
+          if (blacklist) {
+            if (haveIP)
+              g_bl_db.deleteEntry(en_ca);
+            else
+              g_bl_db.deleteEntry(en_nm);
+          }
+          else {
+            if (haveIP)
+              g_wl_db.deleteEntry(en_ca);
+            else
+              g_wl_db.deleteEntry(en_nm);
+          }
         }
       }
     }
@@ -990,7 +1012,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
     // next check the built-in blacklists
     bool blacklisted = false;
     BlackWhiteListEntry ble;
-    if (g_builtin_bl_enabled) {
+    if (g_builtin_bl_enabled && !whitelisted) {
       if (g_bl_db.getEntry(lt.remote, ble)) {
         std::vector<pair<std::string, std::string>> log_attrs =
             {{"expiration",  boost::posix_time::to_simple_string(ble.expiration)},
