@@ -83,9 +83,9 @@ RUN autoreconf -ivf
 RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-sodium --disable-docker --with-luajit --sysconfdir=/etc/wforce
 RUN make clean
 RUN make install DESTDIR=/wforce/install
-RUN strip /wforce/install/usr/bin/wforce /wforce/install/usr/bin/trackalert
+RUN strip /wforce/install/usr/bin/wforce /wforce/install/usr/bin/trackalert /wforce/install/usr/bin/replfwd
 # Remove the default wforce.conf and trackalert.conf files
-RUN rm /wforce/install/etc/wforce/wforce.conf /wforce/install/etc/wforce/trackalert.conf
+RUN rm /wforce/install/etc/wforce/wforce.conf /wforce/install/etc/wforce/trackalert.conf /wforce/install/etc/wforce/replfwd.conf
 
 FROM alpine:3.23 AS wforce_image
 

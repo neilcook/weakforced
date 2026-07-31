@@ -64,7 +64,7 @@ WORKDIR /wforce/
 COPY --from=wforce_build /wforce/install/ /
 
 # Remove the default wforce.conf and trackalert.conf files
-RUN rm /etc/wforce/wforce.conf /etc/wforce/trackalert.conf
+RUN rm /etc/wforce/wforce.conf /etc/wforce/trackalert.conf /etc/wforce/replfwd.conf
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
